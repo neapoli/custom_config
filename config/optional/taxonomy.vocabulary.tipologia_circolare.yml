@@ -1,8 +1,0 @@
-langcode: it
-status: true
-dependencies: {  }
-name: 'Tipologia circolare'
-vid: tipologia_circolare
-description: 'Vocabolario usato con il modulo sign for acknowledgement'
-weight: 0
-new_revision: false
