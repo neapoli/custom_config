@@ -1,7 +1,7 @@
 name: 'Custom config'
 description: 'Configurazioni custom sui vari tipi di contenuto e viste Ouitoulia'
 package: "Neapoli"
-version: 1.0.1
+version: 1.0.3
 
 type: module
 core_version_requirement: ^10 || ^11 || ^12

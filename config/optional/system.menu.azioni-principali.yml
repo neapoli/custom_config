@@ -1,0 +1,7 @@
+langcode: it
+status: true
+dependencies: {  }
+id: azioni-principali
+label: 'Azioni principali'
+description: 'Menù con i link principali per il personale e la segreteria'
+locked: false
