@@ -1,0 +1,20 @@
+langcode: it
+status: true
+dependencies:
+  config:
+    - field.storage.node.email_users
+    - node.type.circolare
+id: node.circolare.email_users
+field_name: email_users
+entity_type: node
+bundle: circolare
+label: 'Send e-mail to notify selected users'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: Acceso
+  off_label: Spento
+field_type: boolean
