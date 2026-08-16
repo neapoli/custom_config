@@ -1,0 +1,25 @@
+{
+    "name": "neapoli/custom_config",
+    "type": "drupal-theme",
+    "description": "Custom config è un modulo drupal che contiene le configurazioni personalizzate della distro Ouitoulia.",
+    "keywords": ["Drupal", "modules", "Skholeio", "Skenografia", "Ouitoulia"],
+    "homepage": "https://github.com/neapoli/custom_config",
+    "license": "AGPL-3.0-only",
+    "authors": [
+        {
+            "name": "Crescenzo Velleca",
+            "email": "info@softwebadvice.com",
+            "role": "Maintainer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/neapoli/custom_config/issues",
+        "source": "https://github.com/neapoli/custom_config"
+    },
+    "require": {
+        "drupal/core": "^10 || ^11 || ^12",
+        "ouitoulia/skenografia": "*"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
