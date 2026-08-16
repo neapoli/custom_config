@@ -1,0 +1,20 @@
+langcode: it
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.enable_roles
+field_name: enable_roles
+entity_type: node
+type: list_string
+settings:
+  allowed_values: {  }
+  allowed_values_function: sign_for_acknowledgement_get_roles
+module: options
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

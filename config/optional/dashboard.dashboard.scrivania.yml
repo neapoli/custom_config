@@ -1,0 +1,83 @@
+langcode: it
+status: true
+dependencies:
+  config:
+    - system.menu.account
+    - system.menu.azioni-principali
+    - views.view.dashboard_content
+  module:
+    - layout_builder
+    - menu_block
+    - views
+id: scrivania
+label: Scrivania
+description: 'Scrivania da utilizzare per la segreteria e il personale'
+layout:
+  -
+    layout_id: layout_twocol_section
+    layout_settings:
+      label: Predefinito
+      context_mapping: {  }
+      column_widths: 33-67
+    components:
+      6326faa7-52f0-4f48-9d83-c96ddb06ab91:
+        uuid: 6326faa7-52f0-4f48-9d83-c96ddb06ab91
+        region: first
+        configuration:
+          id: 'menu_block:account'
+          label: 'Menu profilo utente'
+          label_display: visible
+          provider: menu_block
+          context_mapping: {  }
+          follow: false
+          follow_parent: child
+          display_empty: false
+          label_link: false
+          label_type: block
+          level: 1
+          depth: 0
+          expand_all_items: false
+          parent: 'account:'
+          render_parent: false
+          suggestion: account
+          hide_on_nonactive: false
+        weight: 1
+        additional: {  }
+      b43a65a1-56c0-494b-a6de-de5acd535d05:
+        uuid: b43a65a1-56c0-494b-a6de-de5acd535d05
+        region: first
+        configuration:
+          id: 'menu_block:azioni-principali'
+          label: 'Azioni principali'
+          label_display: visible
+          provider: menu_block
+          context_mapping: {  }
+          follow: false
+          follow_parent: child
+          display_empty: false
+          label_link: false
+          label_type: block
+          level: 1
+          depth: 0
+          expand_all_items: false
+          parent: 'azioni-principali:'
+          render_parent: false
+          suggestion: azioni_principali
+          hide_on_nonactive: false
+        weight: 0
+        additional: {  }
+      d38d996f-213f-4c75-8c0e-f5648a451cbe:
+        uuid: d38d996f-213f-4c75-8c0e-f5648a451cbe
+        region: second
+        configuration:
+          id: 'views_block:dashboard_content-block_site_content'
+          label: 'Contenuti recenti'
+          label_display: visible
+          provider: views
+          context_mapping: {  }
+          views_label: 'Contenuti recenti'
+          items_per_page: '12'
+        weight: 0
+        additional: {  }
+    third_party_settings: {  }
+weight: 0
