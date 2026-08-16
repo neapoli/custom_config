@@ -574,7 +574,7 @@ display:
           plugin_id: text
           empty: false
           content:
-            value: '<p class="text-center"><a title="Vedi tutti i progetti" class="text-underline" href="/progetti" data-focus-mouse="false"><strong>Vedi tutti i progetti </strong></a></p>'
+            value: '<p class="text-center"><a title="Vedi tutti i progetti" class="text-underline" href="/didattica/i-progetti-delle-classi" data-focus-mouse="false"><strong>Vedi tutti i progetti </strong></a></p>'
             format: bootstrap_italia_2
           tokenize: false
       display_extenders: {  }
