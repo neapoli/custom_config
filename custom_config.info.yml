@@ -1,0 +1,16 @@
+name: 'Custom config'
+description: 'Configurazioni custom sui vari tipi di contenuto e viste Ouitoulia'
+package: "Neapoli"
+version: 1.0.0
+
+type: module
+core_version_requirement: ^10 || ^11 || ^12
+dependencies:
+  - config:config
+  - dashboard:dashboard
+  - sign_for_acknowledgement:sign_for_acknowledgement
+  - tac_lite:tac_lite
+  - ui_patterns:ui_patterns
+  - ui_patterns:ui_patterns_library
+  - ui_patterns:ui_patterns_views
+  - ui_patterns_settings:ui_patterns_settings

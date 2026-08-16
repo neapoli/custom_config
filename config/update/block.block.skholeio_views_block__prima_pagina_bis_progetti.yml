@@ -1,0 +1,23 @@
+langcode: it
+status: true
+dependencies:
+  config:
+    - views.view.prima_pagina_bis
+  module:
+    - views
+  theme:
+    - skholeio
+id: skholeio_views_block__prima_pagina_bis_progetti
+theme: skholeio
+region: home_third_row_full_width
+weight: 0
+provider: null
+plugin: 'views_block:prima_pagina_bis-progetti'
+settings:
+  id: 'views_block:prima_pagina_bis-progetti'
+  label: ''
+  label_display: '0'
+  provider: views
+  views_label: ''
+  items_per_page: none
+visibility: {  }
