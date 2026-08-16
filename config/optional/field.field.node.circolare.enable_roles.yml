@@ -1,0 +1,20 @@
+langcode: it
+status: true
+dependencies:
+  config:
+    - field.storage.node.enable_roles
+    - node.type.circolare
+  module:
+    - options
+id: node.circolare.enable_roles
+field_name: enable_roles
+entity_type: node
+bundle: circolare
+label: 'Selezionare i ruoli che sono tenuti a firmare'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,20 @@
+langcode: it
+status: true
+dependencies:
+  config:
+    - field.storage.node.annotation_field_required
+    - node.type.circolare
+id: node.circolare.annotation_field_required
+field_name: annotation_field_required
+entity_type: node
+bundle: circolare
+label: 'Rendi campo annotazioni obbligatorio'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: Acceso
+  off_label: Spento
+field_type: boolean

@@ -1,0 +1,20 @@
+langcode: it
+status: true
+dependencies:
+  config:
+    - field.storage.node.email_roles
+    - node.type.circolare
+id: node.circolare.email_roles
+field_name: email_roles
+entity_type: node
+bundle: circolare
+label: 'Invia e-mail per avvisare gli utenti dei ruoli selezionati'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: Acceso
+  off_label: Spento
+field_type: boolean
