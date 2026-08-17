@@ -1,0 +1,16 @@
+# Voci nel menù "Azioni principali" del sito della scuola.
+# Sono definite qui (e non come menu_link_content) perché devono restare
+# allineate su tutte le scuole: titolo e destinazione si aggiornano con il modulo.
+custom_config.circolari_controllo_firme:
+  title: 'Circolari: controllo firme'
+  description: "Vista per la segreteria per il controllo delle firme sulle circolari."
+  url: 'internal:/admin/circolari-controllo-firme'
+  menu_name: azioni-principali
+  weight: 1
+
+custom_config.circolari_da_firmare:
+  title: 'Circolari: da firmare'
+  description: "Elenco delle circolari che l'utente deve ancora firmare."
+  url: 'internal:/admin/circolari-da-firmare'
+  menu_name: azioni-principali
+  weight: 2

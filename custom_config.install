@@ -4,3 +4,83 @@
  * @file
  * The Custom config news install file.
  */
+
+/**
+ * Nome macchina del menù in cui pubblicare le voci delle circolari.
+ */
+const CUSTOM_CONFIG_MENU_NAME = 'azioni-principali';
+
+/**
+ * URI delle pagine delle circolari, nelle varianti salvabili da interfaccia.
+ *
+ * Le voci di menù vere e proprie sono definite in custom_config.links.menu.yml:
+ * qui servono solo per riconoscere ed eliminare eventuali link creati a mano.
+ */
+const CUSTOM_CONFIG_MENU_LINK_URIS = [
+  'internal:/admin/circolari-controllo-firme',
+  'base:admin/circolari-controllo-firme',
+  'route:view.circolari_controllo_firme.page_1',
+  'internal:/admin/circolari-da-firmare',
+  'base:admin/circolari-da-firmare',
+  'route:view.circolari_da_firmare.page_1',
+];
+
+/**
+ * Implements hook_install().
+ */
+function custom_config_install() {
+  _custom_config_delete_manual_menu_links();
+}
+
+/**
+ * Elimina le voci di menù create a mano verso le pagine delle circolari.
+ *
+ * Le voci sono fornite dal modulo (custom_config.links.menu.yml), quindi ogni
+ * link equivalente creato manualmente nel menù sarebbe un doppione.
+ *
+ * @return int
+ *   Il numero di voci eliminate.
+ */
+function _custom_config_delete_manual_menu_links() {
+  if (!\Drupal::moduleHandler()->moduleExists('menu_link_content')) {
+    return 0;
+  }
+
+  $storage = \Drupal::entityTypeManager()->getStorage('menu_link_content');
+  $deleted = 0;
+
+  foreach (CUSTOM_CONFIG_MENU_LINK_URIS as $uri) {
+    $links = $storage->loadByProperties([
+      'menu_name' => CUSTOM_CONFIG_MENU_NAME,
+      'link.uri' => $uri,
+    ]);
+
+    if ($links) {
+      $storage->delete($links);
+      $deleted += count($links);
+    }
+  }
+
+  if ($deleted) {
+    \Drupal::logger('custom_config')->notice(
+      'Rimosse @count voci di menù duplicate verso le pagine delle circolari: le voci sono ora fornite dal modulo.',
+      ['@count' => $deleted]
+    );
+  }
+
+  return $deleted;
+}
+
+/**
+ * Aggiunge le voci delle circolari al menù "Azioni principali".
+ */
+function custom_config_update_10001() {
+  $deleted = _custom_config_delete_manual_menu_links();
+
+  // Ricostruisce l'albero dei menù per rendere subito visibili le nuove voci.
+  \Drupal::service('plugin.manager.menu.link')->rebuild();
+
+  return $deleted
+    ? t('Voci di menù aggiunte; rimosse @count voci duplicate create manualmente.', ['@count' => $deleted])
+    : t('Voci di menù aggiunte al menù "Azioni principali".');
+}
