@@ -1,0 +1,13 @@
+langcode: it
+status: true
+dependencies: {  }
+id: photon
+label: Photon
+plugin: photon
+configuration:
+  throttle:
+    period: null
+    limit: null
+  geocoder:
+    locale: en
+  rootUrl: 'https://photon.komoot.io'
