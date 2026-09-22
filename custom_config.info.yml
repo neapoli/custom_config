@@ -1,7 +1,7 @@
 name: 'Custom config'
 description: 'Configurazioni custom sui vari tipi di contenuto e viste Ouitoulia'
 package: "Neapoli"
-version: 2.0.3
+version: 2.0.4
 
 type: module
 core_version_requirement: ^10 || ^11 || ^12
@@ -11,6 +11,8 @@ dependencies:
   - geocoder:geocoder
   - geocoder:geocoder_address
   - geocoder:geocoder_field
+  - scheduler:scheduler
+  - selective_better_exposed_filters:selective_better_exposed_filters
   - sign_for_acknowledgement:sign_for_acknowledgement
   - tac_lite:tac_lite
   - ui_patterns:ui_patterns
