@@ -34,6 +34,7 @@ dependencies:
     - file
     - link
     - path
+    - scheduler
     - term_reference_tree
     - text
 third_party_settings:
@@ -283,6 +284,7 @@ content:
       start_minimized: true
       leaves_only: false
       select_parents: false
+      select_all: false
       cascading_selection: 0
       max_depth: 0
     third_party_settings: {  }
@@ -347,6 +349,12 @@ content:
     settings:
       display_label: true
     third_party_settings: {  }
+  publish_on:
+    type: datetime_timestamp_no_default
+    weight: 52
+    region: content
+    settings: {  }
+    third_party_settings: {  }
   scheduler_settings:
     weight: 50
     region: content
@@ -384,6 +392,12 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+  unpublish_on:
+    type: datetime_timestamp_no_default
+    weight: 54
+    region: content
+    settings: {  }
+    third_party_settings: {  }
 hidden:
   alternate_form: true
   alternate_form_multiselect: true
@@ -391,5 +405,3 @@ hidden:
   email_users: true
   enable_users: true
   field_attivo: true
-  publish_on: true
-  unpublish_on: true
