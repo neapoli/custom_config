@@ -1,6 +1,27 @@
 # Voci nel menù "Azioni principali" del sito della scuola.
 # Sono definite qui (e non come menu_link_content) perché devono restare
 # allineate su tutte le scuole: titolo e destinazione si aggiornano con il modulo.
+custom_config.aggiungi_contenuto:
+  title: 'Aggiungi contenuto'
+  description: "Scelta del tipo di contenuto da creare."
+  url: 'internal:/node/add'
+  menu_name: azioni-principali
+  weight: 0
+
+custom_config.aggiungi_tassonomia:
+  title: 'Aggiungi tassonomia'
+  description: "Elenco dei vocabolari per aggiungere o modificare i termini."
+  url: 'internal:/admin/structure/taxonomy'
+  menu_name: azioni-principali
+  weight: 0
+
+custom_config.bacheca_sindacale:
+  title: 'Bacheca sindacale'
+  description: "Pagina della bacheca sindacale."
+  url: 'internal:/le-parole-della-scuola/bacheca-sindacale'
+  menu_name: azioni-principali
+  weight: 0
+
 custom_config.circolari_controllo_firme:
   title: 'Circolari: controllo firme'
   description: "Vista per la segreteria per il controllo delle firme sulle circolari."
