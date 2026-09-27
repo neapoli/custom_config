@@ -119,7 +119,7 @@ display:
             suffix: ''
             target: ''
             nl2br: false
-            max_length: 480
+            max_length: 360
             word_boundary: false
             ellipsis: true
             more_link: false
@@ -353,7 +353,7 @@ display:
         type: some
         options:
           offset: 0
-          items_per_page: 5
+          items_per_page: 6
       exposed_form:
         type: basic
         options:
@@ -497,43 +497,44 @@ display:
       row:
         type: ui_patterns
         options:
-          default_field_elements: 0
+          default_field_elements: false
           inline:
-            title: 0
-            body: 0
-            view_node: 0
-            type: 0
-            created: 0
-            field_abstract: 0
+            title: '0'
+            body: '0'
+            view_node: '0'
+            type: '0'
+            created: '0'
+            field_abstract: '0'
           separator: ''
-          hide_empty: 1
+          hide_empty: true
           pattern: card2_simple
+          pattern_variant: article
           pattern_mapping:
             'views_row:title':
-              destination: card_title
-              weight: 0
               plugin: views_row
               source: title
+              destination: card_title
+              weight: 0
             'views_row:body':
-              destination: card_text
-              weight: 1
               plugin: views_row
               source: body
+              destination: card_text
+              weight: 1
             'views_row:created':
-              destination: card_date
-              weight: 2
               plugin: views_row
               source: created
+              destination: card_date
+              weight: 2
             'views_row:view_node':
-              destination: card_read_more_url
-              weight: 3
               plugin: views_row
               source: view_node
+              destination: card_read_more_url
+              weight: 3
             'views_row:type':
-              destination: card_category
-              weight: 4
               plugin: views_row
               source: type
+              destination: card_category
+              weight: 4
           pattern_settings:
             card2_simple:
               card_shadow: 0
@@ -544,7 +545,6 @@ display:
               default_icon_token: ''
               read_more_type: read_more
               content_padding: xxl
-          pattern_variant: article
       query:
         type: views_query
         options:
