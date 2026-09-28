@@ -170,6 +170,15 @@ function _custom_config_keryx_durata_albo_builder($entity_type, NodeInterface $n
   if (_custom_config_keryx_is_non_pubblicabile($node)) {
     return;
   }
+  // Solo su un atto nuovo, alla prima pubblicazione o se la data di oblio
+  // viene cambiata: modificare altri campi di un atto già pubblicato (es. un
+  // refuso nel titolo) non deve accorciarne la pubblicazione in corso.
+  if (!$node->isNew()) {
+    $salvato = \Drupal::entityTypeManager()->getStorage('node')->loadUnchanged($node->id());
+    if ($salvato && $salvato->isPublished() && $salvato->get('field_data_oblio')->value === $node->get('field_data_oblio')->value) {
+      return;
+    }
+  }
 
   $valore = $node->get('field_data_oblio')->value;
   if ($valore) {
