@@ -47,6 +47,7 @@ function custom_config_keryx_node_presave(NodeInterface $node) {
   if ($node->bundle() !== 'documento' || !$node->hasField(CUSTOM_CONFIG_KERYX_REGISTRO_FIELD)) {
     return;
   }
+  _custom_config_keryx_non_pubblicabile($node);
 
   $field = CUSTOM_CONFIG_KERYX_REGISTRO_FIELD;
   $original = $node->isNew() ? NULL : ($node->original ?? NULL);
@@ -77,6 +78,50 @@ function custom_config_keryx_node_presave(NodeInterface $node) {
   $node->custom_config_keryx_registro_lock = TRUE;
 
   $node->set($field, _custom_config_keryx_next_registro((new DrupalDateTime('now'))->format('Y')));
+}
+
+/**
+ * Indica se il documento ha una tipologia "non pubblicabile".
+ */
+function _custom_config_keryx_is_non_pubblicabile(NodeInterface $node): bool {
+  $tipologia = _custom_config_keryx_tipologia($node);
+  return $tipologia !== NULL && in_array($tipologia, \Drupal::config('custom_config_keryx.settings')->get('tipologie_non_pubblicabili') ?? [], TRUE);
+}
+
+/**
+ * Documenti non pubblicabili: sempre non pubblicati, nell'archivio riservato.
+ *
+ * Contratti individuali e incarichi nominativi del personale contengono dati
+ * personali che nessuna norma impone di pubblicare (Regolamento dell'albo,
+ * artt. 4 e 7; Garante, Linee guida n. 243/2014). Il documento si salva come
+ * non pubblicato e con data di oblio non futura, così è consultabile subito
+ * nell'albo storico riservato. Vale per ogni via di salvataggio (form, API);
+ * le migrazioni li importano già non pubblicati e con date passate.
+ */
+function _custom_config_keryx_non_pubblicabile(NodeInterface $node): void {
+  if (!_custom_config_keryx_is_non_pubblicabile($node)) {
+    return;
+  }
+
+  $corretto = FALSE;
+  if ($node->isPublished()) {
+    $node->setUnpublished();
+    $corretto = TRUE;
+  }
+
+  if ($node->hasField('field_data_oblio')) {
+    $adesso = new DrupalDateTime('now', DateTimeItemInterface::STORAGE_TIMEZONE);
+    $valore = $node->get('field_data_oblio')->value;
+    if (!$valore || new DrupalDateTime($valore, DateTimeItemInterface::STORAGE_TIMEZONE) > $adesso) {
+      $node->set('field_data_oblio', $adesso->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT));
+    }
+  }
+
+  if ($corretto) {
+    $tipologia = _custom_config_keryx_tipologia($node);
+    \Drupal::messenger()->addWarning(t('I documenti di tipo "@tipologia" contengono dati personali e non si pubblicano (Regolamento dell\'albo, artt. 4 e 7): il documento è stato salvato come non pubblicato ed è consultabile nell\'albo storico riservato.', ['@tipologia' => $tipologia]));
+    \Drupal::logger('custom_config_keryx')->notice('Documento "@titolo" di tipo "@tipologia" salvato come non pubblicato (tipologia non pubblicabile).', ['@titolo' => $node->label(), '@tipologia' => $tipologia]);
+  }
 }
 
 /**
@@ -119,6 +164,10 @@ function _custom_config_keryx_scadenza(int $giorni): DrupalDateTime {
  */
 function _custom_config_keryx_durata_albo_builder($entity_type, NodeInterface $node, array &$form, FormStateInterface $form_state) {
   if (!$node->isPublished() || !$node->hasField('field_data_oblio') || !_custom_config_keryx_is_atto_albo($node)) {
+    return;
+  }
+  // I non pubblicabili sono gestiti in presave (non pubblicati, archivio).
+  if (_custom_config_keryx_is_non_pubblicabile($node)) {
     return;
   }
 
@@ -276,6 +325,7 @@ function custom_config_keryx_form_node_form_alter(array &$form, FormStateInterfa
   }
   $form['#entity_builders'][] = '_custom_config_keryx_durata_albo_builder';
   $form['#validate'][] = '_custom_config_keryx_tipologia_validate';
+  $form['#validate'][] = '_custom_config_keryx_nome_nel_titolo_validate';
   $widget = &$form[CUSTOM_CONFIG_KERYX_REGISTRO_FIELD]['widget'][0]['value'];
   if (!$node->isNew() && !$node->get(CUSTOM_CONFIG_KERYX_REGISTRO_FIELD)->isEmpty() && _custom_config_keryx_is_atto_albo($node)) {
     $form[CUSTOM_CONFIG_KERYX_REGISTRO_FIELD]['#disabled'] = TRUE;
@@ -316,6 +366,74 @@ function _custom_config_keryx_tipologia_validate(array &$form, FormStateInterfac
   if (in_array($tipologia, $solo_at, TRUE) && $node->hasField('field_obbligo_di_pubblicazione') && $node->get('field_obbligo_di_pubblicazione')->isEmpty()) {
     $form_state->setErrorByName('field_obbligo_di_pubblicazione', t('La tipologia "@tipologia" si pubblica in Amministrazione Trasparente, non all\'Albo online: indicare l\'obbligo di pubblicazione nel riquadro "Amministrazione trasparente" (es. Bandi di gara e contratti). Regolamento dell\'albo, art. 4.', ['@tipologia' => $tipologia]));
   }
+}
+
+/**
+ * Validazione del form: avviso (non bloccante) se l'oggetto contiene un nome.
+ *
+ * L'oggetto di un atto non deve contenere nomi di persone fisiche, salvo che
+ * una norma lo richieda (Regolamento dell'albo, art. 7). Il controllo non può
+ * essere infallibile, quindi avvisa senza bloccare. Scatta se l'oggetto:
+ * - termina con "- Nome Cognome" (schema tipico degli incarichi nominativi);
+ * - contiene nome e cognome di un utente del sito, in qualsiasi ordine.
+ */
+function _custom_config_keryx_nome_nel_titolo_validate(array &$form, FormStateInterface $form_state) {
+  /** @var \Drupal\node\NodeInterface $node */
+  $node = $form_state->getFormObject()->buildEntity($form, $form_state);
+  if (!$node->isPublished() || !_custom_config_keryx_is_atto_albo($node) || _custom_config_keryx_is_non_pubblicabile($node)) {
+    return;
+  }
+  $trovato = _custom_config_keryx_nome_nel_titolo((string) $node->label());
+  if ($trovato !== NULL) {
+    \Drupal::messenger()->addWarning(t('L\'oggetto sembra contenere il nome di una persona («@nome»). Salvo che una norma lo richieda, l\'oggetto non deve contenere dati personali (Regolamento dell\'albo, art. 7). Verifica prima di pubblicare.', ['@nome' => $trovato]));
+  }
+}
+
+/**
+ * Cerca nel titolo un nome di persona; restituisce il testo trovato o NULL.
+ */
+function _custom_config_keryx_nome_nel_titolo(string $titolo): ?string {
+  // "- Nome Cognome" in fondo all'oggetto.
+  if (preg_match('/[-–]\s*(\p{Lu}[\p{L}\']+(?:\s+\p{Lu}[\p{L}\']+)+)\s*$/u', $titolo, $m)) {
+    return $m[1];
+  }
+
+  // Nome e cognome di un utente del sito, adiacenti, in qualsiasi ordine.
+  $minuscolo = mb_strtolower($titolo);
+  foreach (_custom_config_keryx_nomi_utenti() as [$nome, $cognome]) {
+    foreach (["$nome $cognome", "$cognome $nome"] as $coppia) {
+      if (preg_match('/(?<![\p{L}])' . preg_quote($coppia, '/') . '(?![\p{L}])/u', $minuscolo, $m, PREG_OFFSET_CAPTURE)) {
+        return mb_substr($titolo, mb_strlen(substr($minuscolo, 0, $m[0][1])), mb_strlen($coppia));
+      }
+    }
+  }
+  return NULL;
+}
+
+/**
+ * Coppie [nome, cognome] in minuscolo degli utenti del sito (in cache).
+ */
+function _custom_config_keryx_nomi_utenti(): array {
+  $cache = \Drupal::cache()->get('custom_config_keryx:nomi_utenti');
+  if ($cache) {
+    return $cache->data;
+  }
+  $query = \Drupal::database()->select('users_field_data', 'u');
+  $query->join('user__field_nome', 'n', 'n.entity_id = u.uid AND n.deleted = 0');
+  $query->join('user__field_cognome', 'c', 'c.entity_id = u.uid AND c.deleted = 0');
+  $query->addField('n', 'field_nome_value', 'nome');
+  $query->addField('c', 'field_cognome_value', 'cognome');
+  $coppie = [];
+  foreach ($query->execute() as $riga) {
+    $nome = mb_strtolower(trim($riga->nome));
+    $cognome = mb_strtolower(trim($riga->cognome));
+    if (mb_strlen($nome) >= 2 && mb_strlen($cognome) >= 2) {
+      $coppie["$nome|$cognome"] = [$nome, $cognome];
+    }
+  }
+  $coppie = array_values($coppie);
+  \Drupal::cache()->set('custom_config_keryx:nomi_utenti', $coppie, \Drupal\Core\Cache\Cache::PERMANENT, ['user_list']);
+  return $coppie;
 }
 
 /**
