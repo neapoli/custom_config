@@ -1,0 +1,6 @@
+services:
+  custom_config_keryx.albo_robots_subscriber:
+    class: Drupal\custom_config_keryx\EventSubscriber\AlboRobotsSubscriber
+    arguments: ['@database', '@entity_type.manager']
+    tags:
+      - { name: event_subscriber }

@@ -1,0 +1,13 @@
+custom_config_keryx.annulla_atto:
+  path: '/node/{node}/annulla'
+  defaults:
+    _form: '\Drupal\custom_config_keryx\Form\AnnullaAttoForm'
+    _title: 'Annulla atto'
+  requirements:
+    _custom_access: '\Drupal\custom_config_keryx\Form\AnnullaAttoForm::access'
+    node: \d+
+  options:
+    _admin_route: TRUE
+    parameters:
+      node:
+        type: entity:node

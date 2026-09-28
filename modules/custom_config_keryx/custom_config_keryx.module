@@ -1,0 +1,277 @@
+<?php
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
+use Drupal\node\NodeInterface;
+
+/**
+ * Campo che contiene il numero di registro dell'Albo online.
+ */
+const CUSTOM_CONFIG_KERYX_REGISTRO_FIELD = 'field_codice_identificativo';
+
+/**
+ * Cifre del progressivo annuale: anno + 6 cifre (es. 2026000489), come PASW.
+ */
+const CUSTOM_CONFIG_KERYX_REGISTRO_CIFRE = 6;
+
+/**
+ * Nome del lock che serializza l'assegnazione dei numeri di registro.
+ */
+const CUSTOM_CONFIG_KERYX_REGISTRO_LOCK = 'custom_config_keryx_registro';
+
+/**
+ * Indica se il documento è un atto dell'Albo online.
+ *
+ * Atto dell'albo = documento con numero di protocollo e senza obbligo di
+ * pubblicazione di Amministrazione Trasparente.
+ */
+function _custom_config_keryx_is_atto_albo(NodeInterface $node): bool {
+  if ($node->bundle() !== 'documento' || !$node->hasField('field_protocollo') || $node->get('field_protocollo')->isEmpty()) {
+    return FALSE;
+  }
+  return !$node->hasField('field_obbligo_di_pubblicazione') || $node->get('field_obbligo_di_pubblicazione')->isEmpty();
+}
+
+/**
+ * Implements hook_node_presave().
+ *
+ * Numero di registro dell'Albo online (Regolamento dell'albo, art. 6):
+ * assegnato automaticamente alla prima pubblicazione di un atto, progressivo
+ * per anno solare, non modificabile una volta assegnato.
+ */
+function custom_config_keryx_node_presave(NodeInterface $node) {
+  if ($node->bundle() !== 'documento' || !$node->hasField(CUSTOM_CONFIG_KERYX_REGISTRO_FIELD)) {
+    return;
+  }
+  $field = CUSTOM_CONFIG_KERYX_REGISTRO_FIELD;
+  $original = $node->isNew() ? NULL : ($node->original ?? NULL);
+
+  // Numero già assegnato: non si modifica.
+  if ($original && !$original->get($field)->isEmpty() && _custom_config_keryx_is_atto_albo($original)) {
+    $assegnato = $original->get($field)->value;
+    if ($node->get($field)->value !== $assegnato) {
+      $node->set($field, $assegnato);
+      \Drupal::logger('custom_config_keryx')->warning(
+        'Tentativo di modificare il numero di registro @numero dell\'atto @nid: modifica annullata.',
+        ['@numero' => $assegnato, '@nid' => $node->id()]
+      );
+    }
+    return;
+  }
+
+  // Assegnazione alla prima pubblicazione di un atto dell'albo.
+  if (!$node->isPublished() || !$node->get($field)->isEmpty() || !_custom_config_keryx_is_atto_albo($node)) {
+    return;
+  }
+
+  $lock = \Drupal::lock();
+  while (!$lock->acquire(CUSTOM_CONFIG_KERYX_REGISTRO_LOCK, 30)) {
+    $lock->wait(CUSTOM_CONFIG_KERYX_REGISTRO_LOCK, 5);
+  }
+  // Il lock viene rilasciato dopo il salvataggio (hook_node_insert/update).
+  $node->custom_config_keryx_registro_lock = TRUE;
+
+  $node->set($field, _custom_config_keryx_next_registro((new DrupalDateTime('now'))->format('Y')));
+}
+
+/**
+ * Calcola il prossimo numero di registro per l'anno indicato.
+ *
+ * Il progressivo riparte da 1 a ogni anno solare: il primo atto del 2027 è
+ * 2027000001. Numeri già presenti (anche migrati da PASW) fanno proseguire la
+ * numerazione dell'anno.
+ *
+ * @param string $anno
+ *   Anno solare a quattro cifre.
+ *
+ * @return string
+ *   Il numero di registro, anno + progressivo a 6 cifre.
+ */
+function _custom_config_keryx_next_registro(string $anno): string {
+  $field = CUSTOM_CONFIG_KERYX_REGISTRO_FIELD;
+  $lunghezza = strlen($anno) + CUSTOM_CONFIG_KERYX_REGISTRO_CIFRE;
+  $massimo = \Drupal::database()->select('node__' . $field, 'r')
+    ->condition('r.bundle', 'documento')
+    ->condition('r.deleted', 0)
+    ->condition('r.' . $field . '_value', \Drupal::database()->escapeLike($anno) . '%', 'LIKE')
+    ->where('CHAR_LENGTH(r.' . $field . '_value) = :lunghezza', [':lunghezza' => $lunghezza])
+    ->where('r.' . $field . '_value REGEXP :solo_cifre', [':solo_cifre' => '^[0-9]+$'])
+    ->orderBy('r.' . $field . '_value', 'DESC')
+    ->range(0, 1)
+    ->fields('r', [$field . '_value'])
+    ->execute()
+    ->fetchField();
+
+  $progressivo = $massimo ? ((int) substr($massimo, strlen($anno))) + 1 : 1;
+  return $anno . str_pad((string) $progressivo, CUSTOM_CONFIG_KERYX_REGISTRO_CIFRE, '0', STR_PAD_LEFT);
+}
+
+/**
+ * Implements hook_node_insert().
+ */
+function custom_config_keryx_node_insert(NodeInterface $node) {
+  _custom_config_keryx_release_registro_lock($node);
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function custom_config_keryx_node_update(NodeInterface $node) {
+  _custom_config_keryx_release_registro_lock($node);
+}
+
+/**
+ * Rilascia il lock del registro preso in presave, a salvataggio avvenuto.
+ */
+function _custom_config_keryx_release_registro_lock(EntityInterface $node) {
+  if (!empty($node->custom_config_keryx_registro_lock)) {
+    \Drupal::lock()->release(CUSTOM_CONFIG_KERYX_REGISTRO_LOCK);
+    unset($node->custom_config_keryx_registro_lock);
+  }
+}
+
+/**
+ * Rotte degli elenchi dell'Albo online da non far indicizzare.
+ */
+const CUSTOM_CONFIG_KERYX_NOINDEX_ROUTES = [
+  'view.albo_online.pagina_albo',
+  'view.albo_storico.pagina_albo_storico',
+];
+
+/**
+ * Implements hook_page_attachments_alter().
+ *
+ * Durante la pubblicazione gli atti dell'Albo online non devono essere
+ * indicizzati dai motori di ricerca generalisti (Linee guida AgID sulla
+ * pubblicità legale; Garante privacy, Linee guida n. 243/2014; Regolamento
+ * dell'albo, art. 2): noindex sugli elenchi dell'albo e sulle pagine degli
+ * atti. Per i file allegati vedi AlboRobotsSubscriber.
+ */
+function custom_config_keryx_page_attachments_alter(array &$attachments) {
+  $route_match = \Drupal::routeMatch();
+  $noindex = in_array($route_match->getRouteName(), CUSTOM_CONFIG_KERYX_NOINDEX_ROUTES, TRUE);
+
+  if (!$noindex && $route_match->getRouteName() === 'entity.node.canonical') {
+    $node = $route_match->getParameter('node');
+    $noindex = $node instanceof NodeInterface && _custom_config_keryx_is_atto_albo($node);
+  }
+
+  if ($noindex) {
+    $attachments['#attached']['html_head'][] = [
+      [
+        '#tag' => 'meta',
+        '#attributes' => ['name' => 'robots', 'content' => 'noindex, nofollow'],
+      ],
+      'custom_config_keryx_robots',
+    ];
+  }
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for node_form.
+ *
+ * Nel form dei documenti il numero di registro non si compila a mano.
+ */
+function custom_config_keryx_form_node_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $node = $form_state->getFormObject()->getEntity();
+  if (!$node instanceof NodeInterface || $node->bundle() !== 'documento' || !isset($form[CUSTOM_CONFIG_KERYX_REGISTRO_FIELD])) {
+    return;
+  }
+  $widget = &$form[CUSTOM_CONFIG_KERYX_REGISTRO_FIELD]['widget'][0]['value'];
+  if (!$node->isNew() && !$node->get(CUSTOM_CONFIG_KERYX_REGISTRO_FIELD)->isEmpty() && _custom_config_keryx_is_atto_albo($node)) {
+    $form[CUSTOM_CONFIG_KERYX_REGISTRO_FIELD]['#disabled'] = TRUE;
+    $widget['#description'] = t('Numero di registro dell\'Albo online: assegnato automaticamente, non modificabile.');
+  }
+  else {
+    $widget['#description'] = t('Per gli atti dell\'Albo online (con numero di protocollo) il numero di registro viene assegnato automaticamente alla pubblicazione: lasciare vuoto.');
+    $form['#validate'][] = '_custom_config_keryx_registro_validate';
+  }
+}
+
+/**
+ * Validazione del form: per un atto dell'albo non ancora numerato il numero
+ * di registro non si inserisce a mano (lo assegna il sistema in presave).
+ */
+function _custom_config_keryx_registro_validate(array &$form, FormStateInterface $form_state) {
+  /** @var \Drupal\node\NodeInterface $node */
+  $node = $form_state->getFormObject()->buildEntity($form, $form_state);
+  if (!_custom_config_keryx_is_atto_albo($node) || $node->get(CUSTOM_CONFIG_KERYX_REGISTRO_FIELD)->isEmpty()) {
+    return;
+  }
+  $form_state->setValue([CUSTOM_CONFIG_KERYX_REGISTRO_FIELD, 0, 'value'], '');
+  \Drupal::messenger()->addWarning(t('Il numero di registro dell\'Albo online viene assegnato automaticamente: il valore inserito è stato ignorato.'));
+}
+
+/**
+ * Numero massimo di documenti spubblicati a ogni esecuzione del cron.
+ *
+ * Evita timeout quando molti documenti scadono insieme (per esempio dopo una
+ * migrazione): i restanti vengono spubblicati alle esecuzioni successive.
+ */
+const CUSTOM_CONFIG_KERYX_CRON_LIMIT = 100;
+
+/**
+ * Implements hook_cron().
+ *
+ * Spubblica i documenti la cui data di oblio è passata. È la stessa data che
+ * keryx usa per togliere il documento dall'Albo online: una volta scaduta, il
+ * documento non deve restare raggiungibile dal pubblico (URL diretto, ricerca,
+ * altre viste). Gli atti dell'albo spubblicati restano consultabili
+ * nell'albo storico dai responsabili della pubblicazione.
+ */
+function custom_config_keryx_cron() {
+  $now = new DrupalDateTime('now', DateTimeItemInterface::STORAGE_TIMEZONE);
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+
+  $nids = $storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('type', 'documento')
+    ->condition('status', NodeInterface::PUBLISHED)
+    ->condition('field_data_oblio', $now->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT), '<')
+    ->sort('nid')
+    ->range(0, CUSTOM_CONFIG_KERYX_CRON_LIMIT)
+    ->execute();
+
+  if (!$nids) {
+    return;
+  }
+
+  /** @var \Drupal\node\NodeInterface $node */
+  foreach ($storage->loadMultiple($nids) as $node) {
+    $node->setUnpublished();
+    $node->setNewRevision(TRUE);
+    $node->setRevisionCreationTime(\Drupal::time()->getRequestTime());
+    $node->setRevisionLogMessage('Pubblicazione scaduta: documento spubblicato automaticamente alla data di oblio.');
+    $node->save();
+  }
+
+  \Drupal::logger('custom_config_keryx')->notice(
+    'Spubblicati @count documenti con data di oblio scaduta (nid: @nids).',
+    ['@count' => count($nids), '@nids' => implode(', ', $nids)]
+  );
+}
+
+/**
+ * Implements hook_node_access().
+ *
+ * Albo storico: gli atti con pubblicazione scaduta vengono spubblicati, ma
+ * devono restare consultabili dai responsabili della pubblicazione (permesso
+ * "access albo storico"). L'accesso è concesso solo ai documenti non
+ * pubblicati con numero di protocollo, cioè agli atti dell'Albo online, e non
+ * agli altri contenuti non pubblicati del sito.
+ */
+function custom_config_keryx_node_access(NodeInterface $node, $operation, AccountInterface $account) {
+  if ($operation !== 'view' || $node->bundle() !== 'documento' || $node->isPublished()) {
+    return AccessResult::neutral();
+  }
+
+  $atto_albo = $node->hasField('field_protocollo') && !$node->get('field_protocollo')->isEmpty();
+
+  return AccessResult::allowedIf($atto_albo && $account->hasPermission('access albo storico'))
+    ->cachePerPermissions()
+    ->addCacheableDependency($node);
+}

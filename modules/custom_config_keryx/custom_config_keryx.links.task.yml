@@ -1,0 +1,5 @@
+custom_config_keryx.annulla_atto:
+  title: 'Annulla atto'
+  route_name: custom_config_keryx.annulla_atto
+  base_route: entity.node.canonical
+  weight: 20

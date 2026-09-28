@@ -1,0 +1,133 @@
+<?php
+
+/**
+ * @file
+ * Install file del modulo Custom config keryx.
+ */
+
+use Drupal\Core\Site\Settings;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\user\Entity\Role;
+
+/**
+ * Ruoli dei responsabili della pubblicazione.
+ *
+ * L'amministratore non è elencato: il ruolo amministratore ha già tutti i
+ * permessi.
+ */
+const CUSTOM_CONFIG_KERYX_ALBO_STORICO_ROLES = [
+  'dirigente_scolastico',
+  'direttore_amministrativo_dsga_',
+];
+
+/**
+ * Permessi assegnati ai responsabili della pubblicazione.
+ */
+const CUSTOM_CONFIG_KERYX_RESPONSABILI_PERMISSIONS = [
+  'access albo storico',
+  'annulla atti albo',
+];
+
+/**
+ * Implements hook_install().
+ */
+function custom_config_keryx_install() {
+  _custom_config_keryx_grant_albo_storico_permission();
+  _custom_config_keryx_allegati_private();
+}
+
+/**
+ * Allegati di documenti e circolari nello schema privato.
+ */
+function custom_config_keryx_update_10001() {
+  return _custom_config_keryx_allegati_private();
+}
+
+/**
+ * Permesso "Annullare atti dell'Albo online" a Dirigente e DSGA.
+ */
+function custom_config_keryx_update_10002() {
+  $granted = _custom_config_keryx_grant_albo_storico_permission();
+  return $granted
+    ? (string) t('Permessi dei responsabili della pubblicazione assegnati a: @roles.', ['@roles' => implode(', ', $granted)])
+    : (string) t('Permessi dei responsabili della pubblicazione già assegnati.');
+}
+
+/**
+ * Assegna i permessi dell'albo ai responsabili della pubblicazione.
+ *
+ * I ruoli non presenti nel sito vengono ignorati.
+ *
+ * @return string[]
+ *   Le etichette dei ruoli a cui è stato assegnato almeno un permesso.
+ */
+function _custom_config_keryx_grant_albo_storico_permission() {
+  $granted = [];
+
+  foreach (Role::loadMultiple(CUSTOM_CONFIG_KERYX_ALBO_STORICO_ROLES) as $role) {
+    $mancanti = array_filter(CUSTOM_CONFIG_KERYX_RESPONSABILI_PERMISSIONS, fn($permission) => !$role->hasPermission($permission));
+    if ($mancanti) {
+      foreach ($mancanti as $permission) {
+        $role->grantPermission($permission);
+      }
+      $role->save();
+      $granted[] = $role->label();
+    }
+  }
+
+  if ($granted) {
+    \Drupal::logger('custom_config_keryx')->notice(
+      'Permessi dei responsabili della pubblicazione (albo storico, annullamento) assegnati ai ruoli: @roles.',
+      ['@roles' => implode(', ', $granted)]
+    );
+  }
+
+  return $granted;
+}
+
+/**
+ * Porta gli allegati di documenti e circolari nello schema privato.
+ *
+ * I file pubblici sono serviti direttamente dal server web: restano
+ * scaricabili anche dopo la scadenza della pubblicazione e non possono avere
+ * il noindex. Nello schema privato passano da Drupal, che ne controlla
+ * l'accesso (Regolamento dell'albo, artt. 2 e 9; Garante, Linee guida
+ * n. 243/2014). Il campo field_allegati è condiviso da documento e circolare.
+ *
+ * Lo schema si cambia solo se:
+ * - il percorso privato è configurato e sta fuori dalla docroot;
+ * - il campo non contiene ancora file (quelli esistenti andrebbero spostati).
+ *
+ * @return string
+ *   L'esito, anche per drush updb.
+ */
+function _custom_config_keryx_allegati_private() {
+  $logger = \Drupal::logger('custom_config_keryx');
+  $storage = FieldStorageConfig::loadByName('node', 'field_allegati');
+
+  if (!$storage) {
+    return (string) t('Campo field_allegati assente: nessuna modifica.');
+  }
+  if ($storage->getSetting('uri_scheme') === 'private') {
+    return (string) t('Gli allegati di documenti e circolari sono già nello schema privato.');
+  }
+
+  $private_path = Settings::get('file_private_path');
+  $private_real = $private_path ? realpath($private_path) : FALSE;
+  if (!$private_real || str_starts_with($private_real . '/', realpath(DRUPAL_ROOT) . '/')) {
+    $message = t('Allegati NON portati nello schema privato: configurare in settings.php un file_private_path esistente e fuori dalla docroot, poi eseguire di nuovo drush updb.');
+    $logger->error($message);
+    return (string) $message;
+  }
+
+  if ($storage->hasData()) {
+    $message = t('Allegati NON portati nello schema privato: il campo contiene già file, da spostare con una procedura dedicata.');
+    $logger->error($message);
+    return (string) $message;
+  }
+
+  $storage->setSetting('uri_scheme', 'private')->save();
+  $message = t('Allegati di documenti e circolari portati nello schema privato (private://).');
+  $logger->notice($message);
+  return (string) $message;
+}

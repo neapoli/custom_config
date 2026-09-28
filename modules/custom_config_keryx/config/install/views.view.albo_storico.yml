@@ -1,0 +1,1054 @@
+langcode: it
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_codice_identificativo
+    - field.storage.node.field_data_oblio
+    - field.storage.node.field_protocollo
+    - field.storage.node.field_tipologia_documento
+    - node.type.documento
+    - taxonomy.vocabulary.tipologia_documenti
+  enforced:
+    module:
+      - custom_config_keryx
+  module:
+    - better_exposed_filters
+    - datetime
+    - node
+    - taxonomy
+    - user
+id: albo_storico
+label: 'Albo storico'
+module: views
+description: 'Archivio riservato degli atti con pubblicazione scaduta (Albo online).'
+tag: ''
+base_table: node_field_data
+base_field: nid
+display:
+  default:
+    id: default
+    display_title: Default
+    display_plugin: default
+    position: 0
+    display_options:
+      title: 'Albo storico'
+      fields:
+        field_codice_identificativo:
+          id: field_codice_identificativo
+          table: node__field_codice_identificativo
+          field: field_codice_identificativo
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: field
+          label: 'N. registro'
+          exclude: false
+          alter:
+            alter_text: false
+            text: ''
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: true
+            ellipsis: true
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: false
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: ''
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
+          click_sort_column: value
+          type: string
+          settings:
+            link_to_entity: false
+          group_column: value
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+        field_protocollo:
+          id: field_protocollo
+          table: node__field_protocollo
+          field: field_protocollo
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: field
+          label: Protocollo
+          exclude: false
+          alter:
+            alter_text: false
+            text: ''
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: true
+            ellipsis: true
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: false
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: ''
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
+          click_sort_column: value
+          type: string
+          settings:
+            link_to_entity: false
+          group_column: value
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+        title:
+          id: title
+          table: node_field_data
+          field: title
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: node
+          entity_field: title
+          plugin_id: field
+          label: Oggetto
+          exclude: false
+          alter:
+            alter_text: true
+            text: "<small class=\"text-redbrown fw-bold\">{{ field_tipologia_documento }} - Protocollo n.: {{ field_protocollo }}</small>\r\n<h2 class=\"h6 lh-1\">{{ title }}</h2>\r\n<p class=\"font-serif fs-6 lh-1 text-dark\">{{ field_abstract }}<p>\r\n<p>\r\n<a class=\"read-more text-redbrown\" href=\"{{ view_node }}\" title=\"Leggi l'atto {{ title__value }}\" rel=\"bookmark\" data-focus-mouse=\"false\"><span class=\"text\">Vai al documento</span><span class=\"visually-hidden\">: {{ title__value }}</span></a></p>\r\n"
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: false
+            ellipsis: false
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: true
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: ''
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
+          click_sort_column: value
+          type: string
+          settings:
+            link_to_entity: true
+          group_column: value
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+        field_tipologia_documento:
+          id: field_tipologia_documento
+          table: node__field_tipologia_documento
+          field: field_tipologia_documento
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: field
+          label: Tipologia
+          exclude: false
+          alter:
+            alter_text: false
+            text: ''
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: true
+            ellipsis: true
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: false
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: ''
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
+          click_sort_column: target_id
+          type: entity_reference_label
+          settings:
+            link: false
+          group_column: target_id
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+        created:
+          id: created
+          table: node_field_data
+          field: created
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: node
+          entity_field: created
+          plugin_id: field
+          label: 'Pubblicato il'
+          exclude: false
+          alter:
+            alter_text: false
+            text: ''
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: true
+            ellipsis: true
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: true
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: ''
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
+          click_sort_column: value
+          type: timestamp
+          settings:
+            date_format: custom
+            custom_date_format: d/m/Y
+            timezone: ''
+            tooltip:
+              date_format: ''
+              custom_date_format: ''
+            time_diff:
+              enabled: false
+              future_format: '@interval hence'
+              past_format: '@interval ago'
+              granularity: 2
+              refresh: 60
+          group_column: value
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+        field_data_oblio:
+          id: field_data_oblio
+          table: node__field_data_oblio
+          field: field_data_oblio
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: field
+          label: 'Scaduto il'
+          exclude: false
+          alter:
+            alter_text: false
+            text: ''
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: true
+            ellipsis: true
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: false
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: ''
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
+          click_sort_column: value
+          type: datetime_custom
+          settings:
+            timezone_override: ''
+            date_format: d/m/Y
+          group_column: value
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+        status:
+          id: status
+          table: node_field_data
+          field: status
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: node
+          entity_field: status
+          plugin_id: field
+          label: Stato
+          exclude: false
+          alter:
+            alter_text: false
+            text: ''
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: true
+            ellipsis: true
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: false
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: ''
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
+          click_sort_column: value
+          type: boolean
+          settings:
+            format: custom
+            format_custom_false: 'Non pubblicato'
+            format_custom_true: Pubblicato
+          group_column: value
+          group_columns: {  }
+          group_rows: true
+          delta_limit: 0
+          delta_offset: 0
+          delta_reversed: false
+          delta_first_last: false
+          multi_type: separator
+          separator: ', '
+          field_api_classes: false
+      pager:
+        type: full
+        options:
+          offset: 0
+          pagination_heading_level: h2
+          items_per_page: 25
+          total_pages: null
+          id: 0
+          tags:
+            next: ››
+            previous: ‹‹
+            first: '« Prima'
+            last: 'Ultima »'
+          expose:
+            items_per_page: true
+            items_per_page_label: 'Atti per pagina'
+            items_per_page_options: '10, 20, 30, 40, 50'
+            items_per_page_options_all: false
+            items_per_page_options_all_label: '- Tutto -'
+            offset: false
+            offset_label: Scostamento
+          quantity: 5
+      exposed_form:
+        type: bef
+        options:
+          submit_button: 'Applica filtri'
+          reset_button: true
+          reset_button_label: 'Rimuovi filtri'
+          exposed_sorts_label: 'Ordina per'
+          expose_sort_order: false
+          sort_asc_label: Asc
+          sort_desc_label: Disc
+          text_input_required: 'Seleziona qualsiasi filtro e clicca su Applica per visualizzare i risultati'
+          text_input_required_format: bootstrap_italia_2
+          bef:
+            general:
+              autosubmit: false
+              autosubmit_exclude_textfield: false
+              autosubmit_textfield_delay: 6000
+              autosubmit_textfield_minimum_length: 3
+              autosubmit_hide: false
+              input_required: false
+              allow_secondary: false
+              secondary_label: 'Opzioni avanzate'
+              secondary_open: false
+              reset_button_always_show: false
+            filter:
+              title:
+                plugin_id: default
+                advanced:
+                  placeholder_text: ''
+                  collapsible: false
+                  collapsible_disable_automatic_open: false
+                  is_secondary: false
+                  hide_label: false
+              field_protocollo_value:
+                plugin_id: default
+                advanced:
+                  placeholder_text: ''
+                  collapsible: false
+                  collapsible_disable_automatic_open: false
+                  is_secondary: false
+                  hide_label: false
+              field_anno_scolastico_target_id:
+                plugin_id: bef
+                advanced:
+                  placeholder_text: ''
+                  rewrite:
+                    filter_rewrite_values: ''
+                    filter_rewrite_values_key: false
+                  collapsible: false
+                  collapsible_disable_automatic_open: false
+                  is_secondary: false
+                  hide_label: false
+                select_all_none: false
+                select_all_none_nested: false
+                display_inline: false
+      access:
+        type: perm
+        options:
+          perm: 'access albo storico'
+      cache:
+        type: tag
+        options: {  }
+      empty:
+        area_text_custom:
+          id: area_text_custom
+          table: views
+          field: area_text_custom
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: text_custom
+          empty: true
+          content: 'Nessun atto trovato.'
+          tokenize: false
+      sorts:
+        created:
+          id: created
+          table: node_field_data
+          field: created
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: node
+          entity_field: created
+          plugin_id: date
+          order: DESC
+          expose:
+            label: ''
+            field_identifier: ''
+          exposed: false
+          granularity: second
+      arguments: {  }
+      filters:
+        type:
+          id: type
+          table: node_field_data
+          field: type
+          entity_type: node
+          entity_field: type
+          plugin_id: bundle
+          value:
+            documento: documento
+          group: 1
+        title:
+          id: title
+          table: node_field_data
+          field: title
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: node
+          entity_field: title
+          plugin_id: string
+          operator: '='
+          value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: title_op
+            label: Titolo
+            description: 'Filtra per titolo'
+            use_operator: false
+            operator: title_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: title
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+              anonymous: '0'
+              ex_amministrativo: '0'
+              ex_collaboratore: '0'
+              ex_dirigente: '0'
+              ex_docente: '0'
+              ex_dsga: '0'
+              ex_tecnico: '0'
+              personale_docente: '0'
+              personale_non_docente: '0'
+              collaboratore: '0'
+              direttore_amministrativo_dsga_: '0'
+              personale_amministrativo: '0'
+              personale_tecnico: '0'
+              amministrazione_sito: '0'
+              amministratore: '0'
+              capo_redattore: '0'
+              redattore: '0'
+              dirigente_scolastico: '0'
+            placeholder: 'Scrivi una parte del titolo qui'
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+        field_protocollo_value:
+          id: field_protocollo_value
+          table: node__field_protocollo
+          field: field_protocollo_value
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: string
+          operator: '='
+          value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: field_protocollo_value_op
+            label: 'Numero di protocollo'
+            description: 'Filtra per numero di protocollo'
+            use_operator: false
+            operator: field_protocollo_value_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: field_protocollo_value
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+              anonymous: '0'
+              ex_amministrativo: '0'
+              ex_collaboratore: '0'
+              ex_dirigente: '0'
+              ex_docente: '0'
+              ex_dsga: '0'
+              ex_tecnico: '0'
+              personale_docente: '0'
+              personale_non_docente: '0'
+              collaboratore: '0'
+              direttore_amministrativo_dsga_: '0'
+              personale_amministrativo: '0'
+              personale_tecnico: '0'
+              amministrazione_sito: '0'
+              amministratore: '0'
+              capo_redattore: '0'
+              redattore: '0'
+              dirigente_scolastico: '0'
+            placeholder: '1234'
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+        field_protocollo_not_empty:
+          id: field_protocollo_not_empty
+          table: node__field_protocollo
+          field: field_protocollo_value
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: string
+          operator: 'not empty'
+          value: ''
+          group: 1
+          exposed: false
+          expose:
+            operator_id: field_protocollo_value_op
+            label: 'Numero di protocollo'
+            description: 'Filtra per numero di protocollo'
+            use_operator: false
+            operator: field_protocollo_value_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: field_protocollo_value
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+              anonymous: '0'
+              ex_amministrativo: '0'
+              ex_collaboratore: '0'
+              ex_dirigente: '0'
+              ex_docente: '0'
+              ex_dsga: '0'
+              ex_tecnico: '0'
+              personale_docente: '0'
+              personale_non_docente: '0'
+              collaboratore: '0'
+              direttore_amministrativo_dsga_: '0'
+              personale_amministrativo: '0'
+              personale_tecnico: '0'
+              amministrazione_sito: '0'
+              amministratore: '0'
+              capo_redattore: '0'
+              redattore: '0'
+              dirigente_scolastico: '0'
+            placeholder: '1234'
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+        field_data_oblio_scaduto:
+          id: field_data_oblio_scaduto
+          table: node__field_data_oblio
+          field: field_data_oblio_value
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: datetime
+          operator: '<'
+          value:
+            min: ''
+            max: ''
+            value: now
+            type: offset
+          group: 1
+          exposed: false
+          expose:
+            operator_id: ''
+            label: ''
+            description: ''
+            use_operator: false
+            operator: ''
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: ''
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+        field_tipologia_documento_target_id:
+          id: field_tipologia_documento_target_id
+          table: node__field_tipologia_documento
+          field: field_tipologia_documento_target_id
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: taxonomy_index_tid
+          operator: or
+          value: {  }
+          group: 1
+          exposed: true
+          expose:
+            operator_id: field_tipologia_documento_target_id_op
+            label: Tipologia
+            description: ''
+            use_operator: false
+            operator: field_tipologia_documento_target_id_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: tipologia
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+            reduce: false
+          is_grouped: false
+          group_info: {  }
+          reduce_duplicates: false
+          vid: tipologia_documenti
+          type: select
+          hierarchy: false
+          limit: true
+          error_message: true
+        created:
+          id: created
+          table: node_field_data
+          field: created
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: node
+          entity_field: created
+          plugin_id: date
+          operator: between
+          value:
+            min: ''
+            max: ''
+            value: ''
+            type: date
+          group: 1
+          exposed: true
+          expose:
+            operator_id: created_op
+            label: 'Pubblicato tra'
+            description: ''
+            use_operator: false
+            operator: created_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: pubblicato
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+            min_placeholder: aaaa-mm-gg
+            max_placeholder: aaaa-mm-gg
+            placeholder: ''
+          is_grouped: false
+          group_info: {  }
+      filter_groups:
+        operator: AND
+        groups:
+          1: AND
+      style:
+        type: table
+        options:
+          grouping: {  }
+          row_class: ''
+          default_row_class: true
+          columns:
+            field_codice_identificativo: field_codice_identificativo
+            field_protocollo: field_protocollo
+            title: title
+            field_tipologia_documento: field_tipologia_documento
+            created: created
+            field_data_oblio: field_data_oblio
+            status: status
+          default: created
+          info:
+            field_codice_identificativo:
+              sortable: true
+              default_sort_order: desc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            field_protocollo:
+              sortable: true
+              default_sort_order: desc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            title:
+              sortable: true
+              default_sort_order: desc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            field_tipologia_documento:
+              sortable: false
+              default_sort_order: desc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            created:
+              sortable: true
+              default_sort_order: desc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            field_data_oblio:
+              sortable: true
+              default_sort_order: desc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            status:
+              sortable: false
+              default_sort_order: desc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+          override: true
+          sticky: false
+          summary: ''
+          order: desc
+          empty_table: true
+          caption: 'Albo storico'
+          description: ''
+      row:
+        type: fields
+        options: {  }
+      query:
+        type: views_query
+        options:
+          query_comment: ''
+          disable_sql_rewrite: true
+          distinct: false
+          replica: false
+          query_tags: {  }
+      relationships: {  }
+      css_class: ''
+      use_ajax: true
+      header:
+        area:
+          id: area
+          table: views
+          field: area
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: text
+          empty: false
+          content:
+            value: "<h1 class=\"p-0 mb-2 fw-lighter\">Albo storico</h1>\r\n<p class=\"lead\">Archivio riservato degli atti la cui pubblicazione all'albo online è scaduta. Consultabile esclusivamente dai responsabili della pubblicazione.</p>"
+            format: bootstrap_italia_2
+          tokenize: false
+      footer: {  }
+      display_extenders: {  }
+    cache_metadata:
+      max-age: -1
+      contexts:
+        - 'languages:language_content'
+        - 'languages:language_interface'
+        - url
+        - url.query_args
+        - 'user.node_grants:view'
+        - user.permissions
+      tags:
+        - 'config:field.storage.node.field_codice_identificativo'
+        - 'config:field.storage.node.field_data_oblio'
+        - 'config:field.storage.node.field_protocollo'
+        - 'config:field.storage.node.field_tipologia_documento'
+  pagina_albo_storico:
+    id: pagina_albo_storico
+    display_title: 'Pagina albo storico'
+    display_plugin: page
+    position: 1
+    display_options:
+      display_description: "La vista mostra l'albo online"
+      display_extenders: {  }
+      path: novita/albo-online/storico
+    cache_metadata:
+      max-age: -1
+      contexts:
+        - 'languages:language_content'
+        - 'languages:language_interface'
+        - url
+        - url.query_args
+        - 'user.node_grants:view'
+        - user.permissions
+      tags:
+        - 'config:field.storage.node.field_codice_identificativo'
+        - 'config:field.storage.node.field_data_oblio'
+        - 'config:field.storage.node.field_protocollo'
+        - 'config:field.storage.node.field_tipologia_documento'

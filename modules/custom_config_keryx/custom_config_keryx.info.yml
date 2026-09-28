@@ -1,0 +1,14 @@
+name: 'Custom config keryx'
+description: 'Configurazioni aggiuntive per keryx: Albo online (albo storico riservato) e Amministrazione Trasparente'
+package: "Neapoli"
+version: 2.1.0
+
+type: module
+core_version_requirement: ^10 || ^11 || ^12
+dependencies:
+  - custom_config:custom_config
+  - keryx:keryx
+  - drupal:node
+  - drupal:views
+  - paragraphs:paragraphs
+  - scheduler:scheduler

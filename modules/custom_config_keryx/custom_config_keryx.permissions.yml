@@ -1,0 +1,9 @@
+access albo storico:
+  title: 'Consultare l''albo storico'
+  description: 'Accesso all''archivio degli atti con pubblicazione scaduta (Albo online), riservato ai responsabili della pubblicazione.'
+  restrict access: true
+
+annulla atti albo:
+  title: 'Annullare atti dell''Albo online'
+  description: 'Annullamento motivato di un atto pubblicato (Regolamento dell''albo, art. 8). L''operatore viene registrato.'
+  restrict access: true
