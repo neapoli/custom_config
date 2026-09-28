@@ -11,3 +11,11 @@ custom_config_keryx.annulla_atto:
     parameters:
       node:
         type: entity:node
+
+custom_config_keryx.regole_pubblicazione:
+  path: '/admin/config/ouitoulia/keryx/regole'
+  defaults:
+    _form: '\Drupal\custom_config_keryx\Form\RegolePubblicazioneForm'
+    _title: 'Keryx: regole di pubblicazione'
+  requirements:
+    _permission: 'administer site configuration'

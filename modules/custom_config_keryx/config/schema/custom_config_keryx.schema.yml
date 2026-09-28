@@ -1,0 +1,16 @@
+custom_config_keryx.settings:
+  type: config_object
+  label: 'Keryx: regole di pubblicazione'
+  mapping:
+    tipologie_solo_at:
+      type: sequence
+      label: 'Tipologie di documento da pubblicare solo in Amministrazione Trasparente'
+      sequence:
+        type: string
+        label: 'Nome della tipologia'
+    tipologie_non_pubblicabili:
+      type: sequence
+      label: 'Tipologie di documento non pubblicabili'
+      sequence:
+        type: string
+        label: 'Nome della tipologia'

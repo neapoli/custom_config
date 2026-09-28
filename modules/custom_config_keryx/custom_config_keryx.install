@@ -54,6 +54,18 @@ function custom_config_keryx_update_10002() {
 }
 
 /**
+ * Configurazione delle regole di pubblicazione per tipologia.
+ */
+function custom_config_keryx_update_10003() {
+  $config = \Drupal::configFactory()->getEditable('custom_config_keryx.settings');
+  if (!$config->isNew()) {
+    return (string) t('Regole di pubblicazione già configurate.');
+  }
+  $config->setData(['tipologie_solo_at' => [], 'tipologie_non_pubblicabili' => []])->save();
+  return (string) t('Creata la configurazione delle regole di pubblicazione: compilarla in Configurazione > Ouitoulía > Keryx: regole di pubblicazione.');
+}
+
+/**
  * Assegna i permessi dell'albo ai responsabili della pubblicazione.
  *
  * I ruoli non presenti nel sito vengono ignorati.

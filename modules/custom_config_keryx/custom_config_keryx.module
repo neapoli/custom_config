@@ -47,6 +47,7 @@ function custom_config_keryx_node_presave(NodeInterface $node) {
   if ($node->bundle() !== 'documento' || !$node->hasField(CUSTOM_CONFIG_KERYX_REGISTRO_FIELD)) {
     return;
   }
+
   $field = CUSTOM_CONFIG_KERYX_REGISTRO_FIELD;
   $original = $node->isNew() ? NULL : ($node->original ?? NULL);
 
@@ -76,6 +77,98 @@ function custom_config_keryx_node_presave(NodeInterface $node) {
   $node->custom_config_keryx_registro_lock = TRUE;
 
   $node->set($field, _custom_config_keryx_next_registro((new DrupalDateTime('now'))->format('Y')));
+}
+
+/**
+ * Durata ordinaria della pubblicazione all'albo, in giorni interi.
+ */
+const CUSTOM_CONFIG_KERYX_DURATA_GIORNI = 15;
+
+/**
+ * Durata massima ammessa per la pubblicazione all'albo, in giorni.
+ */
+const CUSTOM_CONFIG_KERYX_DURATA_MASSIMA_GIORNI = 60;
+
+/**
+ * Scadenza della pubblicazione dopo il numero di giorni indicato.
+ *
+ * Giorni interi e consecutivi dal giorno successivo alla pubblicazione, con
+ * scadenza alle 24.00 dell'ultimo giorno; se l'ultimo giorno è festivo, la
+ * scadenza slitta al primo giorno lavorativo (Regolamento dell'albo, art. 5).
+ */
+function _custom_config_keryx_scadenza(int $giorni): DrupalDateTime {
+  $scadenza = new DrupalDateTime('today');
+  $scadenza->modify('+' . $giorni . ' days');
+  while (_custom_config_keryx_is_festivo($scadenza)) {
+    $scadenza->modify('+1 day');
+  }
+  $scadenza->setTime(23, 59, 59);
+  return $scadenza;
+}
+
+/**
+ * Entity builder del form dei documenti: durata della pubblicazione all'albo.
+ *
+ * themethla propone per i documenti una data di oblio a +10 anni, adatta ai
+ * documenti in generale ma non agli atti dell'albo, che resterebbero
+ * nell'albo online per anni. Se un atto dell'albo viene pubblicato dal form
+ * senza data di oblio o con una durata oltre il massimo ammesso (60 giorni),
+ * si applica la durata ordinaria di 15 giorni (Regolamento dell'albo, art. 5).
+ *
+ * Il controllo è solo nel form: le migrazioni importano le date originali.
+ */
+function _custom_config_keryx_durata_albo_builder($entity_type, NodeInterface $node, array &$form, FormStateInterface $form_state) {
+  if (!$node->isPublished() || !$node->hasField('field_data_oblio') || !_custom_config_keryx_is_atto_albo($node)) {
+    return;
+  }
+
+  $valore = $node->get('field_data_oblio')->value;
+  if ($valore) {
+    $oblio = new DrupalDateTime($valore, DateTimeItemInterface::STORAGE_TIMEZONE);
+    if ($oblio <= _custom_config_keryx_scadenza(CUSTOM_CONFIG_KERYX_DURATA_MASSIMA_GIORNI)) {
+      return;
+    }
+  }
+
+  $scadenza = _custom_config_keryx_scadenza(CUSTOM_CONFIG_KERYX_DURATA_GIORNI);
+  $utc = clone $scadenza;
+  $utc->setTimezone(new \DateTimeZone(DateTimeItemInterface::STORAGE_TIMEZONE));
+  $node->set('field_data_oblio', $utc->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT));
+
+  // L'entity builder gira sia in validazione sia in invio: un solo avviso.
+  if (!$form_state->get('custom_config_keryx_avviso_durata')) {
+    $form_state->set('custom_config_keryx_avviso_durata', TRUE);
+    \Drupal::messenger()->addWarning(t('Durata non ammessa per l\'Albo online: data di fine pubblicazione impostata al @data (@giorni giorni, Regolamento dell\'albo art. 5). Per una durata diversa indicare una data entro @massimo giorni.', [
+      '@data' => $scadenza->format('d/m/Y'),
+      '@giorni' => CUSTOM_CONFIG_KERYX_DURATA_GIORNI,
+      '@massimo' => CUSTOM_CONFIG_KERYX_DURATA_MASSIMA_GIORNI,
+    ]));
+  }
+}
+
+/**
+ * Indica se il giorno è festivo: domenica o festività nazionale.
+ */
+function _custom_config_keryx_is_festivo(DrupalDateTime $giorno): bool {
+  if ($giorno->format('N') === '7') {
+    return TRUE;
+  }
+  $anno = (int) $giorno->format('Y');
+  $festivi = ['01-01', '01-06', '04-25', '05-01', '06-02', '08-15', '11-01', '12-08', '12-25', '12-26'];
+
+  // Lunedì dell'Angelo: il giorno dopo Pasqua (algoritmo di Meeus/Jones/Butcher).
+  $a = $anno % 19;
+  $b = intdiv($anno, 100);
+  $c = $anno % 100;
+  $h = (19 * $a + $b - intdiv($b, 4) - intdiv($b - intdiv($b + 8, 25) + 1, 3) + 15) % 30;
+  $l = (32 + 2 * ($b % 4) + 2 * intdiv($c, 4) - $h - ($c % 4)) % 7;
+  $m = intdiv($a + 11 * $h + 22 * $l, 451);
+  $mese = intdiv($h + $l - 7 * $m + 114, 31);
+  $giorno_pasqua = (($h + $l - 7 * $m + 114) % 31) + 1;
+  $pasquetta = (new \DateTime(sprintf('%d-%02d-%02d', $anno, $mese, $giorno_pasqua)))->modify('+1 day');
+  $festivi[] = $pasquetta->format('m-d');
+
+  return in_array($giorno->format('m-d'), $festivi, TRUE);
 }
 
 /**
@@ -181,6 +274,8 @@ function custom_config_keryx_form_node_form_alter(array &$form, FormStateInterfa
   if (!$node instanceof NodeInterface || $node->bundle() !== 'documento' || !isset($form[CUSTOM_CONFIG_KERYX_REGISTRO_FIELD])) {
     return;
   }
+  $form['#entity_builders'][] = '_custom_config_keryx_durata_albo_builder';
+  $form['#validate'][] = '_custom_config_keryx_tipologia_validate';
   $widget = &$form[CUSTOM_CONFIG_KERYX_REGISTRO_FIELD]['widget'][0]['value'];
   if (!$node->isNew() && !$node->get(CUSTOM_CONFIG_KERYX_REGISTRO_FIELD)->isEmpty() && _custom_config_keryx_is_atto_albo($node)) {
     $form[CUSTOM_CONFIG_KERYX_REGISTRO_FIELD]['#disabled'] = TRUE;
@@ -189,6 +284,37 @@ function custom_config_keryx_form_node_form_alter(array &$form, FormStateInterfa
   else {
     $widget['#description'] = t('Per gli atti dell\'Albo online (con numero di protocollo) il numero di registro viene assegnato automaticamente alla pubblicazione: lasciare vuoto.');
     $form['#validate'][] = '_custom_config_keryx_registro_validate';
+  }
+}
+
+/**
+ * Nome della tipologia del documento, se indicata.
+ */
+function _custom_config_keryx_tipologia(NodeInterface $node): ?string {
+  if (!$node->hasField('field_tipologia_documento') || $node->get('field_tipologia_documento')->isEmpty()) {
+    return NULL;
+  }
+  return $node->get('field_tipologia_documento')->entity?->label();
+}
+
+/**
+ * Validazione del form: regole di pubblicazione per tipologia.
+ *
+ * Una tipologia "solo Amministrazione Trasparente" richiede l'obbligo di
+ * pubblicazione AT: senza, il documento finirebbe nell'Albo online
+ * (Regolamento dell'albo, art. 4). Le tipologie sono configurate in
+ * Configurazione > Ouitoulía > Keryx: regole di pubblicazione.
+ */
+function _custom_config_keryx_tipologia_validate(array &$form, FormStateInterface $form_state) {
+  /** @var \Drupal\node\NodeInterface $node */
+  $node = $form_state->getFormObject()->buildEntity($form, $form_state);
+  $tipologia = _custom_config_keryx_tipologia($node);
+  if ($tipologia === NULL) {
+    return;
+  }
+  $solo_at = \Drupal::config('custom_config_keryx.settings')->get('tipologie_solo_at') ?? [];
+  if (in_array($tipologia, $solo_at, TRUE) && $node->hasField('field_obbligo_di_pubblicazione') && $node->get('field_obbligo_di_pubblicazione')->isEmpty()) {
+    $form_state->setErrorByName('field_obbligo_di_pubblicazione', t('La tipologia "@tipologia" si pubblica in Amministrazione Trasparente, non all\'Albo online: indicare l\'obbligo di pubblicazione nel riquadro "Amministrazione trasparente" (es. Bandi di gara e contratti). Regolamento dell\'albo, art. 4.', ['@tipologia' => $tipologia]));
   }
 }
 
@@ -217,20 +343,26 @@ const CUSTOM_CONFIG_KERYX_CRON_LIMIT = 100;
 /**
  * Implements hook_cron().
  *
- * Spubblica i documenti la cui data di oblio è passata. È la stessa data che
- * keryx usa per togliere il documento dall'Albo online: una volta scaduta, il
- * documento non deve restare raggiungibile dal pubblico (URL diretto, ricerca,
- * altre viste). Gli atti dell'albo spubblicati restano consultabili
- * nell'albo storico dai responsabili della pubblicazione.
+ * Spubblica gli atti dell'Albo online la cui data di oblio è passata: a fine
+ * pubblicazione l'atto non deve restare raggiungibile dal pubblico (URL
+ * diretto, ricerca, altre viste) ma solo dall'albo storico riservato
+ * (Regolamento dell'albo, art. 9; Garante, Linee guida n. 243/2014).
+ *
+ * Gli altri documenti non vengono toccati: per keryx, alla data di oblio
+ * escono dagli elenchi ma restano raggiungibili da chi ha il link.
  */
 function custom_config_keryx_cron() {
   $now = new DrupalDateTime('now', DateTimeItemInterface::STORAGE_TIMEZONE);
   $storage = \Drupal::entityTypeManager()->getStorage('node');
 
+  // Atto dell'albo = con protocollo e senza obbligo di pubblicazione AT
+  // (vedi _custom_config_keryx_is_atto_albo()).
   $nids = $storage->getQuery()
     ->accessCheck(FALSE)
     ->condition('type', 'documento')
     ->condition('status', NodeInterface::PUBLISHED)
+    ->exists('field_protocollo')
+    ->notExists('field_obbligo_di_pubblicazione')
     ->condition('field_data_oblio', $now->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT), '<')
     ->sort('nid')
     ->range(0, CUSTOM_CONFIG_KERYX_CRON_LIMIT)
@@ -245,12 +377,12 @@ function custom_config_keryx_cron() {
     $node->setUnpublished();
     $node->setNewRevision(TRUE);
     $node->setRevisionCreationTime(\Drupal::time()->getRequestTime());
-    $node->setRevisionLogMessage('Pubblicazione scaduta: documento spubblicato automaticamente alla data di oblio.');
+    $node->setRevisionLogMessage('Pubblicazione all\'albo scaduta: atto spubblicato automaticamente alla data di fine pubblicazione.');
     $node->save();
   }
 
   \Drupal::logger('custom_config_keryx')->notice(
-    'Spubblicati @count documenti con data di oblio scaduta (nid: @nids).',
+    'Spubblicati @count atti dell\'albo con pubblicazione scaduta (nid: @nids).',
     ['@count' => count($nids), '@nids' => implode(', ', $nids)]
   );
 }

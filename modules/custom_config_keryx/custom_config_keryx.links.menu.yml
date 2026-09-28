@@ -1,0 +1,6 @@
+custom_config_keryx.regole_pubblicazione:
+  title: 'Keryx: regole di pubblicazione'
+  description: 'Tipologie di documento da pubblicare solo in Amministrazione Trasparente o non pubblicabili.'
+  parent: ouitolia.admin
+  route_name: custom_config_keryx.regole_pubblicazione
+  weight: 10
