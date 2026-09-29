@@ -71,7 +71,7 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: 'text-nowrap small'
+          element_class: text-nowrap
           element_label_type: ''
           element_label_class: 'text-nowrap small'
           element_label_colon: false
@@ -134,7 +134,7 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: 'text-nowrap small'
+          element_class: text-nowrap
           element_label_type: ''
           element_label_class: 'text-nowrap small'
           element_label_colon: false
@@ -199,7 +199,7 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: small
+          element_class: ''
           element_label_type: ''
           element_label_class: 'text-nowrap small'
           element_label_colon: true
@@ -262,7 +262,7 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: small
+          element_class: ''
           element_label_type: ''
           element_label_class: 'text-nowrap small'
           element_label_colon: false
@@ -327,7 +327,7 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: 'text-nowrap small'
+          element_class: text-nowrap
           element_label_type: ''
           element_label_class: 'text-nowrap small'
           element_label_colon: true
@@ -401,7 +401,7 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: 'text-nowrap small'
+          element_class: text-nowrap
           element_label_type: ''
           element_label_class: 'text-nowrap small'
           element_label_colon: false
