@@ -354,6 +354,9 @@ function custom_config_keryx_form_views_exposed_form_alter(array &$form, FormSta
   $date = &$form['pubblicato_wrapper']['pubblicato_wrapper']['pubblicato'];
   $date['min']['#title'] = t('Data minima');
   $date['max']['#title'] = t('Data massima');
+  // Il select della tipologia, sopra, non ha il margine inferiore dei campi
+  // di testo: senza spazio l'etichetta "Data minima" sale sulla sua riga.
+  $form['pubblicato_wrapper']['pubblicato_wrapper']['#attributes']['class'][] = 'mt-5';
   $form['#validate'][] = '_custom_config_keryx_albo_storico_data_massima';
 }
 
