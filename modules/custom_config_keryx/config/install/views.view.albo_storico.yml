@@ -172,8 +172,8 @@ display:
           label: Oggetto
           exclude: false
           alter:
-            alter_text: true
-            text: "<small class=\"text-redbrown fw-bold\">{{ field_tipologia_documento }} - Protocollo n.: {{ field_protocollo }}</small>\r\n<h2 class=\"h6 lh-1\">{{ title }}</h2>\r\n<p class=\"font-serif fs-6 lh-1 text-dark\">{{ field_abstract }}<p>\r\n<p>\r\n<a class=\"read-more text-redbrown\" href=\"{{ view_node }}\" title=\"Leggi l'atto {{ title__value }}\" rel=\"bookmark\" data-focus-mouse=\"false\"><span class=\"text\">Vai al documento</span><span class=\"visually-hidden\">: {{ title__value }}</span></a></p>\r\n"
+            alter_text: false
+            text: ''
             make_link: false
             path: ''
             absolute: false
