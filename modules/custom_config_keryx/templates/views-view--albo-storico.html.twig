@@ -1,0 +1,18 @@
+{#
+/**
+ * @file
+ * Albo storico: stesso aspetto dell'Albo online di skenografia, con i testi
+ * dell'archivio riservato.
+ */
+#}
+{% extends '@skenografia/modules/keryx/amministrazione_trasparente/views-view--albo-online.html.twig' %}
+
+{% block asideA11yDescription %}
+  <h2 class="h4 fw-lighter">Filtra gli atti</h2>
+  <p class="mb-5">Usa i seguenti campi per filtrare gli atti con pubblicazione scaduta.</p>
+{% endblock %}
+
+{% block contentA11yDescription %}
+  <h2 class="h3 fw-lighter">Atti con pubblicazione scaduta</h2>
+  <p class="mb-5 font-serif col-lg-9">Archivio riservato ai responsabili della pubblicazione (Regolamento dell'albo online, art. 9). Gli atti non sono più consultabili dal pubblico: una copia si ottiene con una richiesta di accesso agli atti.</p>
+{% endblock %}

@@ -4,3 +4,10 @@ custom_config_keryx.regole_pubblicazione:
   parent: ouitolia.admin
   route_name: custom_config_keryx.regole_pubblicazione
   weight: 10
+
+custom_config_keryx.albo_storico:
+  title: 'Albo storico'
+  description: 'Archivio riservato degli atti con pubblicazione scaduta.'
+  route_name: view.albo_storico.pagina_albo_storico
+  menu_name: azioni-principali
+  weight: 5

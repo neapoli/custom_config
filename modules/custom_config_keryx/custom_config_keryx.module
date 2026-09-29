@@ -286,6 +286,60 @@ function _custom_config_keryx_release_registro_lock(EntityInterface $node) {
 }
 
 /**
+ * Implements hook_theme().
+ *
+ * Template dell'albo storico con lo stesso aspetto dell'albo online del tema
+ * skenografia (la vista e il percorso diversi non ne ereditano i template).
+ */
+function custom_config_keryx_theme($existing, $type, $theme, $path) {
+  if (!\Drupal::service('theme_handler')->themeExists('skenografia')) {
+    return [];
+  }
+  $templates = \Drupal::service('extension.list.module')->getPath('custom_config_keryx') . '/templates';
+  return [
+    'views_view__albo_storico' => [
+      'base hook' => 'views_view',
+      'template' => 'views-view--albo-storico',
+      'path' => $templates,
+    ],
+    'page__path__novita__albo_online__storico' => [
+      'base hook' => 'page',
+      'template' => 'page--path--novita--albo-online--storico',
+      'path' => $templates,
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for views_view.
+ *
+ * Collegamenti tra albo online e albo storico nell'intestazione, solo per chi
+ * può consultare lo storico (il tema non mostra le schede dei local task).
+ */
+function custom_config_keryx_preprocess_views_view(array &$variables) {
+  $view = $variables['view'];
+  $collegamenti = [
+    'albo_online' => ['view.albo_storico.pagina_albo_storico', t('Consulta l\'albo storico')],
+    'albo_storico' => ['view.albo_online.pagina_albo', t('Torna all\'albo online')],
+  ];
+  if (!isset($collegamenti[$view->id()]) || !$view->getDisplay()->hasPath()) {
+    return;
+  }
+  $variables['#cache']['contexts'][] = 'user.permissions';
+  if (!\Drupal::currentUser()->hasPermission('access albo storico')) {
+    return;
+  }
+  [$route, $testo] = $collegamenti[$view->id()];
+  $variables['header']['custom_config_keryx_albo_storico'] = [
+    '#type' => 'link',
+    '#title' => $testo,
+    '#url' => \Drupal\Core\Url::fromRoute($route),
+    '#attributes' => ['class' => ['btn', 'btn-sm', 'btn-outline-light', 'mt-3', 'mb-3']],
+    '#weight' => 100,
+  ];
+}
+
+/**
  * Rotte degli elenchi dell'Albo online da non far indicizzare.
  */
 const CUSTOM_CONFIG_KERYX_NOINDEX_ROUTES = [
