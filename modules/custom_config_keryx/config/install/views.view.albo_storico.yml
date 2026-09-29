@@ -41,7 +41,7 @@ display:
           group_type: group
           admin_label: ''
           plugin_id: field
-          label: 'N. registro'
+          label: Registro
           exclude: false
           alter:
             alter_text: false
@@ -71,9 +71,9 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: ''
+          element_class: 'text-nowrap small'
           element_label_type: ''
-          element_label_class: ''
+          element_label_class: 'text-nowrap small'
           element_label_colon: false
           element_wrapper_type: ''
           element_wrapper_class: ''
@@ -134,9 +134,9 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: ''
+          element_class: 'text-nowrap small'
           element_label_type: ''
-          element_label_class: ''
+          element_label_class: 'text-nowrap small'
           element_label_colon: false
           element_wrapper_type: ''
           element_wrapper_class: ''
@@ -199,9 +199,9 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: ''
+          element_class: small
           element_label_type: ''
-          element_label_class: ''
+          element_label_class: 'text-nowrap small'
           element_label_colon: true
           element_wrapper_type: ''
           element_wrapper_class: ''
@@ -262,9 +262,9 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: ''
+          element_class: small
           element_label_type: ''
-          element_label_class: ''
+          element_label_class: 'text-nowrap small'
           element_label_colon: false
           element_wrapper_type: ''
           element_wrapper_class: ''
@@ -297,7 +297,7 @@ display:
           entity_type: node
           entity_field: created
           plugin_id: field
-          label: 'Pubblicato il'
+          label: Pubblicato
           exclude: false
           alter:
             alter_text: false
@@ -327,9 +327,9 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: ''
+          element_class: 'text-nowrap small'
           element_label_type: ''
-          element_label_class: ''
+          element_label_class: 'text-nowrap small'
           element_label_colon: true
           element_wrapper_type: ''
           element_wrapper_class: ''
@@ -371,7 +371,7 @@ display:
           group_type: group
           admin_label: ''
           plugin_id: field
-          label: 'Scaduto il'
+          label: Scadenza
           exclude: false
           alter:
             alter_text: false
@@ -401,9 +401,9 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: ''
+          element_class: 'text-nowrap small'
           element_label_type: ''
-          element_label_class: ''
+          element_label_class: 'text-nowrap small'
           element_label_colon: false
           element_wrapper_type: ''
           element_wrapper_class: ''
@@ -467,9 +467,9 @@ display:
             preserve_tags: ''
             html: false
           element_type: ''
-          element_class: ''
+          element_class: 'text-nowrap small'
           element_label_type: ''
-          element_label_class: ''
+          element_label_class: 'text-nowrap small'
           element_label_colon: false
           element_wrapper_type: ''
           element_wrapper_class: ''
@@ -985,6 +985,7 @@ display:
           empty_table: true
           caption: 'Albo storico'
           description: ''
+          class: 'table table-sm small'
       row:
         type: fields
         options: {  }
