@@ -354,6 +354,20 @@ function custom_config_keryx_form_views_exposed_form_alter(array &$form, FormSta
   $date = &$form['pubblicato_wrapper']['pubblicato_wrapper']['pubblicato'];
   $date['min']['#title'] = t('Data minima');
   $date['max']['#title'] = t('Data massima');
+  $form['#validate'][] = '_custom_config_keryx_albo_storico_data_massima';
+}
+
+/**
+ * Include nella ricerca tutto il giorno della data massima.
+ *
+ * Il filtro data di Drupal legge "30-09-2025" come la mezzanotte all'inizio
+ * del giorno ed esclude gli atti pubblicati in quel giorno.
+ */
+function _custom_config_keryx_albo_storico_data_massima(array &$form, FormStateInterface $form_state) {
+  $max = trim((string) $form_state->getValue(['pubblicato', 'max']));
+  if (preg_match('/^\d{1,2}-\d{1,2}-\d{4}$|^\d{4}-\d{1,2}-\d{1,2}$/', $max)) {
+    $form_state->setValue(['pubblicato', 'max'], $max . ' 23:59:59');
+  }
 }
 
 /**
