@@ -311,6 +311,27 @@ function custom_config_keryx_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Implements hook_views_pre_view().
+ *
+ * L'Albo online di keryx elenca tutti i documenti pubblicati non scaduti:
+ * vi entrerebbero anche i documenti di Amministrazione Trasparente, che non
+ * sono atti di pubblicità legale. Si aggiunge il filtro "senza obbligo di
+ * pubblicazione" (stessa regola di _custom_config_keryx_is_atto_albo()), senza
+ * modificare la vista di keryx. L'albo storico ha lo stesso filtro nella sua
+ * configurazione.
+ */
+function custom_config_keryx_views_pre_view(\Drupal\views\ViewExecutable $view, $display_id, array &$args) {
+  if ($view->id() !== 'albo_online') {
+    return;
+  }
+  $view->addHandler($display_id, 'filter', 'node__field_obbligo_di_pubblicazione', 'field_obbligo_di_pubblicazione_target_id', [
+    'operator' => 'empty',
+    'plugin_id' => 'taxonomy_index_tid',
+    'vid' => 'obblighi_di_pubblicazione',
+  ], 'custom_config_keryx_solo_albo');
+}
+
+/**
  * Implements hook_preprocess_HOOK() for views_view.
  *
  * Collegamenti tra albo online e albo storico nell'intestazione, solo per chi

@@ -7,6 +7,7 @@ dependencies:
     - field.storage.node.field_protocollo
     - field.storage.node.field_tipologia_documento
     - node.type.documento
+    - taxonomy.vocabulary.obblighi_di_pubblicazione
     - taxonomy.vocabulary.tipologia_documenti
   enforced:
     module:
@@ -842,6 +843,14 @@ display:
             placeholder: ''
           is_grouped: false
           group_info: {  }
+        field_obbligo_di_pubblicazione_target_id:
+          id: field_obbligo_di_pubblicazione_target_id
+          table: node__field_obbligo_di_pubblicazione
+          field: field_obbligo_di_pubblicazione_target_id
+          admin_label: "Solo atti dell'albo (senza obbligo di pubblicazione AT)"
+          plugin_id: taxonomy_index_tid
+          operator: empty
+          vid: obblighi_di_pubblicazione
       filter_groups:
         operator: AND
         groups:
