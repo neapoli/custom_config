@@ -5,6 +5,7 @@
  * Install file del modulo Custom config keryx.
  */
 
+use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Site\Settings;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\user\Entity\Role;
@@ -63,6 +64,32 @@ function custom_config_keryx_update_10003() {
   }
   $config->setData(['tipologie_solo_at' => [], 'tipologie_non_pubblicabili' => []])->save();
   return (string) t('Creata la configurazione delle regole di pubblicazione: compilarla in Configurazione > Ouitoulía > Keryx: regole di pubblicazione.');
+}
+
+/**
+ * Albo storico: riallinea la vista alla versione del modulo.
+ *
+ * Esclude i documenti di Amministrazione Trasparente (filtro "senza obbligo
+ * di pubblicazione") e porta sui siti già installati le modifiche alla
+ * tabella e ai filtri. La vista è del modulo (dipendenza enforced): eventuali
+ * modifiche fatte dall'interfaccia vengono sostituite.
+ */
+function custom_config_keryx_update_10004() {
+  $path = \Drupal::service('extension.list.module')->getPath('custom_config_keryx') . '/config/install';
+  $data = (new FileStorage($path))->read('views.view.albo_storico');
+  $storage = \Drupal::entityTypeManager()->getStorage('view');
+
+  $view = $storage->load('albo_storico');
+  if ($view) {
+    $data['uuid'] = $view->uuid();
+    $view = $storage->updateFromStorageRecord($view, $data);
+  }
+  else {
+    $view = $storage->createFromStorageRecord($data);
+  }
+  $view->save();
+
+  return (string) t('Vista dell\'albo storico aggiornata: esclusi i documenti di Amministrazione Trasparente.');
 }
 
 /**
