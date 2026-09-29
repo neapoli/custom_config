@@ -340,6 +340,23 @@ function custom_config_keryx_preprocess_views_view(array &$variables) {
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter() for views_exposed_form.
+ *
+ * Filtro per data di pubblicazione dell'albo storico: etichette in italiano
+ * al posto di "Min" e "Max" (il formato gg-mm-aaaa è nei segnaposto della
+ * vista e il filtro data di Drupal lo interpreta correttamente).
+ */
+function custom_config_keryx_form_views_exposed_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $view = $form_state->get('view');
+  if (!$view || $view->id() !== 'albo_storico' || !isset($form['pubblicato_wrapper']['pubblicato_wrapper']['pubblicato'])) {
+    return;
+  }
+  $date = &$form['pubblicato_wrapper']['pubblicato_wrapper']['pubblicato'];
+  $date['min']['#title'] = t('Data minima');
+  $date['max']['#title'] = t('Data massima');
+}
+
+/**
  * Rotte degli elenchi dell'Albo online da non far indicizzare.
  */
 const CUSTOM_CONFIG_KERYX_NOINDEX_ROUTES = [

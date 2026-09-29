@@ -825,7 +825,7 @@ display:
           exposed: true
           expose:
             operator_id: created_op
-            label: 'Pubblicato tra'
+            label: ''
             description: ''
             use_operator: false
             operator: created_op
@@ -837,8 +837,8 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-            min_placeholder: aaaa-mm-gg
-            max_placeholder: aaaa-mm-gg
+            min_placeholder: gg-mm-aaaa
+            max_placeholder: gg-mm-aaaa
             placeholder: ''
           is_grouped: false
           group_info: {  }
