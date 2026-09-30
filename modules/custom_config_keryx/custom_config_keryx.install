@@ -93,6 +93,60 @@ function custom_config_keryx_update_10004() {
 }
 
 /**
+ * Sezione "Obblighi precedenti il 31/12/2023" di Bandi di gara e contratti.
+ */
+const CUSTOM_CONFIG_KERYX_SEZIONE_ANTE_2024 = 9123;
+
+/**
+ * Obblighi della sezione ante 2024 in cui si pubblicano documenti.
+ *
+ * 9589 singole procedure (L. 190/2012 art. 1 c. 32), 9590 tabelle riassuntive,
+ * 9594 delibera a contrarre, 9598 contratti, 9606 progetti di investimento.
+ */
+const CUSTOM_CONFIG_KERYX_OBBLIGHI_ANTE_2024 = [9589, 9590, 9594, 9598, 9606];
+
+/**
+ * Pubblica la sezione "Obblighi precedenti il 31/12/2023" di Bandi di gara.
+ *
+ * keryx la installa non pubblicata, ma gli atti delle procedure avviate prima
+ * del 2024 restano soggetti alla disciplina previgente (delibera ANAC
+ * 601/2023) e devono restare consultabili per 5 anni (D.Lgs. 33/2013 art. 8
+ * c. 3). Si pubblicano la sezione e i soli obblighi che contengono documenti:
+ * gli altri restano spenti, senza voci vuote nel menu.
+ *
+ * Attenzione: rilanciare con --update la migrazione degli obblighi di keryx
+ * ripristina lo stato "non pubblicato"; in quel caso rieseguire
+ * _custom_config_keryx_pubblica_sezione_ante_2024().
+ */
+function custom_config_keryx_update_10005() {
+  return _custom_config_keryx_pubblica_sezione_ante_2024();
+}
+
+/**
+ * Pubblica la sezione ante 2024 e i suoi obblighi con documenti.
+ *
+ * @return string
+ *   L'esito, anche per drush updb.
+ */
+function _custom_config_keryx_pubblica_sezione_ante_2024() {
+  $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+  $pubblicati = [];
+
+  foreach ($storage->loadMultiple(array_merge([CUSTOM_CONFIG_KERYX_SEZIONE_ANTE_2024], CUSTOM_CONFIG_KERYX_OBBLIGHI_ANTE_2024)) as $term) {
+    if (!$term->isPublished()) {
+      $term->setPublished()->save();
+      $pubblicati[] = $term->id();
+    }
+  }
+
+  if (!$pubblicati) {
+    return (string) t('Sezione "Obblighi precedenti il 31/12/2023" già pubblicata (o assente).');
+  }
+  \Drupal::logger('custom_config_keryx')->notice('Pubblicati i termini della sezione "Obblighi precedenti il 31/12/2023": @tids.', ['@tids' => implode(', ', $pubblicati)]);
+  return (string) t('Pubblicati la sezione "Obblighi precedenti il 31/12/2023" e i suoi obblighi con documenti (@tids).', ['@tids' => implode(', ', $pubblicati)]);
+}
+
+/**
  * Assegna i permessi dell'albo ai responsabili della pubblicazione.
  *
  * I ruoli non presenti nel sito vengono ignorati.
