@@ -321,6 +321,10 @@ function custom_config_keryx_theme($existing, $type, $theme, $path) {
  * configurazione.
  */
 function custom_config_keryx_views_pre_view(\Drupal\views\ViewExecutable $view, $display_id, array &$args) {
+  if ($view->id() === 'amministrazione_trasparente_obblighi' && $display_id === '9568_elenco_annuale_progetti') {
+    _custom_config_keryx_progetti_data_avvio($view, $display_id);
+    return;
+  }
   if ($view->id() !== 'albo_online') {
     return;
   }
@@ -329,6 +333,94 @@ function custom_config_keryx_views_pre_view(\Drupal\views\ViewExecutable $view, 
     'plugin_id' => 'taxonomy_index_tid',
     'vid' => 'obblighi_di_pubblicazione',
   ], 'custom_config_keryx_solo_albo');
+}
+
+/**
+ * Obbligo 9578: colonna "Data di avvio" nell'elenco dei progetti di keryx.
+ *
+ * L'elenco annuale dei progetti di investimento pubblico deve indicare CUP,
+ * importo, fonti finanziarie, data di avvio e stato di attuazione (D.Lgs.
+ * 33/2013 art. 38; delibera ANAC 601/2023): la vista di keryx non mostra la
+ * data di avvio. Si aggiunge il campo "Data di inizio" dei finanziamenti dopo
+ * l'importo, senza modificare la vista di keryx.
+ */
+function _custom_config_keryx_progetti_data_avvio(\Drupal\views\ViewExecutable $view, $display_id) {
+  $display = $view->displayHandlers->get($display_id);
+  $fields = $display->getOption('fields');
+  if (isset($fields['field_data_inizio'])) {
+    return;
+  }
+  $data_avvio = [
+    'id' => 'field_data_inizio',
+    'table' => 'node__field_data_inizio',
+    'field' => 'field_data_inizio',
+    'plugin_id' => 'field',
+    'entity_type' => 'node',
+    'entity_field' => 'field_data_inizio',
+    'label' => 'Data di avvio',
+    'type' => 'datetime_custom',
+    'settings' => ['timezone_override' => '', 'date_format' => 'd/m/Y'],
+  ];
+  $nuovi = [];
+  foreach ($fields as $id => $field) {
+    $nuovi[$id] = $field;
+    if ($id === 'field_importo_finanziamento') {
+      $nuovi['field_data_inizio'] = $data_avvio;
+    }
+  }
+  $nuovi += ['field_data_inizio' => $data_avvio];
+  $display->setOption('fields', $nuovi);
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for taxonomy_term.
+ *
+ * Obbligo 9578 "Progetti di investimento pubblico": keryx mostra l'elenco dei
+ * nodi finanziamento e nasconde i documenti dell'obbligo, ma lo stato di
+ * attuazione finanziario richiesto per l'elenco annuale (D.Lgs. 33/2013
+ * art. 38; delibera ANAC 601/2023) non ha un campo nei finanziamenti: sta
+ * nelle tabelle annuali pubblicate come documenti. Si elencano anche quelle.
+ */
+function custom_config_keryx_preprocess_taxonomy_term(array &$variables) {
+  $term = $variables['term'] ?? NULL;
+  if (!$term || $term->bundle() !== 'obblighi_di_pubblicazione' || (int) $term->id() !== 9578 || ($variables['view_mode'] ?? '') !== 'full') {
+    return;
+  }
+  $now = new DrupalDateTime('now', DateTimeItemInterface::STORAGE_TIMEZONE);
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $query = $storage->getQuery()
+    ->accessCheck(TRUE)
+    ->condition('type', 'documento')
+    ->condition('status', NodeInterface::PUBLISHED)
+    ->condition('field_obbligo_di_pubblicazione', 9578)
+    ->sort('created', 'DESC');
+  $query->condition($query->orConditionGroup()
+    ->notExists('field_data_oblio')
+    ->condition('field_data_oblio', $now->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT), '>'));
+
+  $items = [];
+  foreach ($storage->loadMultiple($query->execute()) as $node) {
+    $items[] = $node->toLink()->toRenderable();
+  }
+
+  $variables['content']['custom_config_keryx_elenchi_annuali'] = [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['container-xxl', 'py-4']],
+    'titolo' => [
+      '#type' => 'html_tag',
+      '#tag' => 'h2',
+      '#value' => t('Elenchi annuali dei progetti finanziati'),
+      '#attributes' => ['class' => ['h4', 'fw-lighter']],
+    ],
+    'descrizione' => [
+      '#type' => 'html_tag',
+      '#tag' => 'p',
+      '#value' => t('Tabelle annuali con CUP, importo, fonti finanziarie, data di avvio e stato di attuazione finanziario e procedurale dei progetti.'),
+    ],
+    'elenco' => $items ? ['#theme' => 'item_list', '#items' => $items] : ['#markup' => '<p>' . t('Nessun elenco annuale pubblicato.') . '</p>'],
+    '#weight' => 90,
+    '#cache' => ['tags' => ['node_list'], 'contexts' => ['user.permissions']],
+  ];
 }
 
 /**
