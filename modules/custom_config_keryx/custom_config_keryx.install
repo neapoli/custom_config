@@ -35,6 +35,7 @@ const CUSTOM_CONFIG_KERYX_RESPONSABILI_PERMISSIONS = [
 function custom_config_keryx_install() {
   _custom_config_keryx_grant_albo_storico_permission();
   _custom_config_keryx_allegati_private();
+  _custom_config_keryx_blocchi_at_tema();
 }
 
 /**
@@ -223,4 +224,57 @@ function _custom_config_keryx_allegati_private() {
   $message = t('Allegati di documenti e circolari portati nello schema privato (private://).');
   $logger->notice($message);
   return (string) $message;
+}
+
+/**
+ * Blocchi di navigazione dell'Amministrazione Trasparente nel tema del sito.
+ */
+function custom_config_keryx_update_10006() {
+  return _custom_config_keryx_blocchi_at_tema();
+}
+
+/**
+ * Posiziona i blocchi di navigazione dell'AT nel tema predefinito.
+ *
+ * keryx posiziona il menu delle sezioni e l'elenco delle sottosezioni
+ * (viste amministrazione_trasparente, display "menu" e "tipologie_dati") solo
+ * nel tema skenografia. In un sottotema usato come tema predefinito (es.
+ * skholeio) le pagine di sezione restano senza sottosezioni e obblighi: la
+ * sezione Amministrazione Trasparente non è navigabile (D.Lgs. 33/2013
+ * art. 9 e all. 1). I blocchi vengono copiati con regione, peso e visibilità
+ * di skenografia, solo se il tema non li ha già.
+ *
+ * @return string
+ *   L'esito, anche per drush updb.
+ */
+function _custom_config_keryx_blocchi_at_tema() {
+  $tema = \Drupal::config('system.theme')->get('default');
+  $temi = \Drupal::service('theme_handler')->listInfo();
+  if ($tema === 'skenografia' || !isset($temi[$tema]) || !isset($temi[$tema]->base_themes['skenografia'])) {
+    return (string) t('Blocchi dell\'Amministrazione Trasparente: il tema @tema non è un sottotema di skenografia, nessuna modifica.', ['@tema' => $tema]);
+  }
+
+  $storage = \Drupal::entityTypeManager()->getStorage('block');
+  $regioni = system_region_list($tema);
+  $creati = [];
+  foreach (['views_block:amministrazione_trasparente-menu', 'views_block:amministrazione_trasparente-tipologie_dati'] as $plugin) {
+    if ($storage->loadByProperties(['theme' => $tema, 'plugin' => $plugin])) {
+      continue;
+    }
+    $origine = $storage->loadByProperties(['theme' => 'skenografia', 'plugin' => $plugin]);
+    $origine = reset($origine);
+    if (!$origine || !isset($regioni[$origine->getRegion()])) {
+      continue;
+    }
+    $id = $tema . '_' . preg_replace('/^skenografia_/', '', $origine->id());
+    $blocco = $origine->createDuplicateBlock($id, $tema);
+    $blocco->save();
+    $creati[] = $blocco->id();
+  }
+
+  if (!$creati) {
+    return (string) t('Blocchi dell\'Amministrazione Trasparente già presenti nel tema @tema.', ['@tema' => $tema]);
+  }
+  \Drupal::logger('custom_config_keryx')->notice('Blocchi dell\'Amministrazione Trasparente posizionati nel tema @tema: @ids.', ['@tema' => $tema, '@ids' => implode(', ', $creati)]);
+  return (string) t('Blocchi dell\'Amministrazione Trasparente posizionati nel tema @tema: @ids.', ['@tema' => $tema, '@ids' => implode(', ', $creati)]);
 }
