@@ -42,3 +42,33 @@ function custom_config_entity_presave(Drupal\Core\Entity\EntityInterface $entity
       break;
   }
 }
+
+/**
+ * Vocabolari le cui pagine dei termini mostrano i filtri esposti.
+ *
+ * La vista taxonomy_term (pagina di un termine) è unica per tutti i
+ * vocabolari: i filtri "Titolo" e "Tipo di contenuto" servono solo qui.
+ * "argomenti" = "Le parole della scuola".
+ */
+const CUSTOM_CONFIG_TAXONOMY_TERM_FILTRI_VOCABOLARI = ['argomenti'];
+
+/**
+ * Implements hook_views_pre_view().
+ *
+ * Nella pagina di un termine toglie i filtri esposti se il termine non
+ * appartiene a uno dei vocabolari di CUSTOM_CONFIG_TAXONOMY_TERM_FILTRI_VOCABOLARI.
+ */
+function custom_config_views_pre_view(\Drupal\views\ViewExecutable $view, $display_id, array &$args) {
+  if ($view->id() !== 'taxonomy_term' || $display_id !== 'page_1') {
+    return;
+  }
+  $term = !empty($args[0]) && is_numeric($args[0])
+    ? \Drupal::entityTypeManager()->getStorage('taxonomy_term')->load($args[0])
+    : NULL;
+  if ($term && in_array($term->bundle(), CUSTOM_CONFIG_TAXONOMY_TERM_FILTRI_VOCABOLARI, TRUE)) {
+    return;
+  }
+  $display = $view->displayHandlers->get($display_id);
+  $filters = array_filter($display->getOption('filters'), fn($filter) => empty($filter['exposed']));
+  $display->setOption('filters', $filters);
+}
