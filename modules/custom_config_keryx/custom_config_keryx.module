@@ -583,48 +583,69 @@ const CUSTOM_CONFIG_KERYX_CRON_LIMIT = 100;
 /**
  * Implements hook_cron().
  *
- * Spubblica gli atti dell'Albo online la cui data di oblio è passata: a fine
- * pubblicazione l'atto non deve restare raggiungibile dal pubblico (URL
- * diretto, ricerca, altre viste) ma solo dall'albo storico riservato
- * (Regolamento dell'albo, art. 9; Garante, Linee guida n. 243/2014).
+ * Spubblica i documenti la cui data di oblio è passata:
+ * - atti dell'Albo online: a fine pubblicazione non devono restare
+ *   raggiungibili dal pubblico (URL diretto, ricerca, altre viste) ma solo
+ *   dall'albo storico riservato (Regolamento dell'albo, art. 9; Garante, Linee
+ *   guida n. 243/2014);
+ * - documenti di Amministrazione Trasparente (con obbligo di pubblicazione):
+ *   alla scadenza dei 5 anni, o dei termini più brevi degli artt. 14 e 15,
+ *   l'obbligo cessa e la trasparenza è assicurata dall'accesso civico
+ *   (D.Lgs. 33/2013 art. 8 c. 3; ANAC, FAQ 21); per i dati personali la
+ *   pubblicazione non deve proseguire oltre il termine.
  *
- * Gli altri documenti non vengono toccati: per keryx, alla data di oblio
- * escono dagli elenchi ma restano raggiungibili da chi ha il link.
+ * I documenti senza data di oblio (atti che producono effetti finché non
+ * vengono sostituiti) e quelli che non sono né atti dell'albo né documenti
+ * AT non vengono toccati.
  */
 function custom_config_keryx_cron() {
   $now = new DrupalDateTime('now', DateTimeItemInterface::STORAGE_TIMEZONE);
   $storage = \Drupal::entityTypeManager()->getStorage('node');
 
-  // Atto dell'albo = con protocollo e senza obbligo di pubblicazione AT
-  // (vedi _custom_config_keryx_is_atto_albo()).
-  $nids = $storage->getQuery()
+  // Atto dell'albo = con protocollo e senza obbligo (vedi
+  // _custom_config_keryx_is_atto_albo()); documento AT = con obbligo.
+  $query = $storage->getQuery()
     ->accessCheck(FALSE)
     ->condition('type', 'documento')
     ->condition('status', NodeInterface::PUBLISHED)
-    ->exists('field_protocollo')
-    ->notExists('field_obbligo_di_pubblicazione')
     ->condition('field_data_oblio', $now->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT), '<')
     ->sort('nid')
-    ->range(0, CUSTOM_CONFIG_KERYX_CRON_LIMIT)
-    ->execute();
+    ->range(0, CUSTOM_CONFIG_KERYX_CRON_LIMIT);
+  $query->condition($query->orConditionGroup()
+    ->exists('field_obbligo_di_pubblicazione')
+    ->exists('field_protocollo'));
+  $nids = $query->execute();
 
   if (!$nids) {
     return;
   }
 
+  $spubblicati = ['albo' => [], 'at' => []];
   /** @var \Drupal\node\NodeInterface $node */
   foreach ($storage->loadMultiple($nids) as $node) {
+    $albo = _custom_config_keryx_is_atto_albo($node);
     $node->setUnpublished();
     $node->setNewRevision(TRUE);
     $node->setRevisionCreationTime(\Drupal::time()->getRequestTime());
-    $node->setRevisionLogMessage('Pubblicazione all\'albo scaduta: atto spubblicato automaticamente alla data di fine pubblicazione.');
+    $node->setRevisionLogMessage($albo
+      ? 'Pubblicazione all\'albo scaduta: atto spubblicato automaticamente alla data di fine pubblicazione.'
+      : 'Obbligo di pubblicazione scaduto (D.Lgs. 33/2013 art. 8 c. 3): documento spubblicato automaticamente alla data di fine pubblicazione.');
     $node->save();
+    $spubblicati[$albo ? 'albo' : 'at'][] = $node->id();
   }
 
-  \Drupal::logger('custom_config_keryx')->notice(
-    'Spubblicati @count atti dell\'albo con pubblicazione scaduta (nid: @nids).',
-    ['@count' => count($nids), '@nids' => implode(', ', $nids)]
-  );
+  if ($spubblicati['albo']) {
+    \Drupal::logger('custom_config_keryx')->notice(
+      'Spubblicati @count atti dell\'albo con pubblicazione scaduta (nid: @nids).',
+      ['@count' => count($spubblicati['albo']), '@nids' => implode(', ', $spubblicati['albo'])]
+    );
+  }
+  if ($spubblicati['at']) {
+    \Drupal::logger('custom_config_keryx')->notice(
+      'Spubblicati @count documenti di Amministrazione Trasparente con pubblicazione scaduta (nid: @nids).',
+      ['@count' => count($spubblicati['at']), '@nids' => implode(', ', $spubblicati['at'])]
+    );
+  }
 }
 
 /**
