@@ -182,7 +182,7 @@ content:
             grouping: AND
             values_set: 5
             value: ''
-            values: '12'
+            values: '1000012'
             value_form: {  }
             effect: show
             effect_options: {  }
@@ -206,7 +206,7 @@ content:
             grouping: AND
             values_set: 3
             value: ''
-            values: '12'
+            values: '1000012'
             value_form: {  }
             effect: show
             effect_options: {  }
@@ -233,7 +233,7 @@ content:
             grouping: AND
             values_set: 5
             value: ''
-            values: '12'
+            values: '1000012'
             value_form: {  }
             effect: show
             effect_options: {  }
