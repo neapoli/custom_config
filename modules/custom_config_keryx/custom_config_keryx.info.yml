@@ -1,7 +1,7 @@
 name: 'Custom config keryx'
 description: 'Configurazioni aggiuntive per keryx: Albo online (albo storico riservato) e Amministrazione Trasparente'
 package: "Neapoli"
-version: 2.1.0
+version: 2.2.0
 
 type: module
 core_version_requirement: ^10 || ^11 || ^12

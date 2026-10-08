@@ -17,6 +17,12 @@ function custom_config_entity_presave(Drupal\Core\Entity\EntityInterface $entity
       $tipoCircolareName = $tipoCircolareLoad->getName();
       \Drupal::messenger()->addWarning($tipoCircolareName);
       switch ($tipoCircolareName){
+        case 'Adesione Iniziative':
+          $entity->set('alternate_form', TRUE);
+          $entity->alternate_form_text="Aderisco
+          NON Aderisco";
+
+          break;
         case 'Assemblea Sindacale':
           $entity->set('alternate_form', TRUE);
           $entity->alternate_form_text="NON sono in servizio
