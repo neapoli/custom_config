@@ -29,7 +29,131 @@ const CUSTOM_CONFIG_MENU_LINK_URIS = [
  * Implements hook_install().
  */
 function custom_config_install() {
+  // Prima config/optional, poi config/update, che può dipendere da essa: così
+  // il sito è completo subito, senza aspettare il primo "drush updb".
+  _custom_config_apply_configs('optional');
+  _custom_config_apply_configs('update');
   _custom_config_delete_manual_menu_links();
+}
+
+/**
+ * Applica una cartella di configurazioni sovrascrivendo anche ciò che esiste.
+ *
+ * Drupal installa da config/optional solo ciò che nel sito non c'è ancora: ma
+ * le impostazioni di acknowledgements e di tac_lite, e il campo body della
+ * circolare, le creano i rispettivi moduli quando vengono installati, cioè
+ * prima di custom_config. Restavano quindi quelle predefinite: la circolare
+ * non risultava abilitata alle prese visione e mancavano i permessi per
+ * destinatari. config/update, invece, all'installazione non veniva applicata
+ * affatto: la riapplica solo l'hook che parte dopo "drush updb".
+ *
+ * Le impostazioni semplici si sovrascrivono; le entità di configurazione
+ * (campi, vocabolari, viste…) passano dalle loro API, così Drupal aggiorna
+ * anche tabelle e cache, e quelle già presenti tengono il proprio uuid.
+ * Si salta, segnalandolo nel registro, ciò che dipende da un modulo o da un
+ * tema non installato, o da una configurazione che non c'è: lo stesso criterio
+ * di Drupal, ma senza bloccare tutto il resto per un solo file.
+ *
+ * @param string $cartella
+ *   La sottocartella di config: 'optional' o 'update'.
+ *
+ * @return string[]
+ *   I nomi delle configurazioni applicate.
+ */
+function _custom_config_apply_configs($cartella) {
+  $path = \Drupal::service('extension.list.module')->getPath('custom_config') . '/config/' . $cartella;
+  if (!is_dir($path)) {
+    return [];
+  }
+
+  $source = new \Drupal\Core\Config\FileStorage($path);
+  $config_manager = \Drupal::service('config.manager');
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $module_handler = \Drupal::moduleHandler();
+  $theme_handler = \Drupal::service('theme_handler');
+  $presenti = array_flip(\Drupal::service('config.storage')->listAll());
+  $applicate = [];
+  $saltate = [];
+
+  // Prima ciò da cui dipende il resto: i campi dopo i loro storage.
+  $dati = $source->readMultiple($source->listAll());
+  $ordine = new \Drupal\Core\Config\Entity\ConfigDependencyManager();
+  $dati = array_merge(array_flip($ordine->setData($dati)->sortAll()), $dati);
+
+  foreach ($dati as $nome => $data) {
+    $entity_type_id = $config_manager->getEntityTypeIdByName($nome);
+
+    // Le impostazioni semplici appartengono al modulo del prefisso.
+    $dipendenze = $data['dependencies'] ?? [];
+    $moduli = array_merge($dipendenze['module'] ?? [], $dipendenze['enforced']['module'] ?? []);
+    $temi = array_merge($dipendenze['theme'] ?? [], $dipendenze['enforced']['theme'] ?? []);
+    $config = array_merge($dipendenze['config'] ?? [], $dipendenze['enforced']['config'] ?? []);
+    if (!$entity_type_id) {
+      $moduli[] = strstr($nome, '.', TRUE);
+    }
+
+    $mancanti = [];
+    foreach (array_unique($moduli) as $modulo) {
+      if ($modulo !== 'core' && !$module_handler->moduleExists($modulo)) {
+        $mancanti[] = $modulo;
+      }
+    }
+    foreach (array_unique($temi) as $tema) {
+      if (!$theme_handler->themeExists($tema)) {
+        $mancanti[] = $tema;
+      }
+    }
+    foreach ($config as $necessaria) {
+      if (!isset($presenti[$necessaria])) {
+        $mancanti[] = $necessaria;
+      }
+    }
+    if ($mancanti) {
+      $saltate[] = $nome . ' (' . implode(', ', $mancanti) . ')';
+      continue;
+    }
+
+    try {
+      if (!$entity_type_id) {
+        \Drupal::configFactory()->getEditable($nome)->setData($data)->save(TRUE);
+      }
+      else {
+        /** @var \Drupal\Core\Config\Entity\ConfigEntityStorageInterface $storage */
+        $storage = $entity_type_manager->getStorage($entity_type_id);
+        $id = $storage->getIDFromConfigName($nome, $storage->getEntityType()->getConfigPrefix());
+        $esistente = $storage->load($id);
+
+        if ($esistente) {
+          $data['uuid'] = $esistente->uuid();
+          $entity = $storage->updateFromStorageRecord($esistente, $data);
+        }
+        else {
+          $entity = $storage->createFromStorageRecord($data);
+        }
+        // Come fa l'importazione delle configurazioni di Drupal: in modalità
+        // sincronizzazione le entità non verificano i plugin che citano (un
+        // fornitore di geocoder non installato fermerebbe tutto).
+        $entity->setSyncing(TRUE);
+        $entity->save();
+      }
+    }
+    catch (\Throwable $e) {
+      $saltate[] = $nome . ' (' . $e->getMessage() . ')';
+      continue;
+    }
+
+    $presenti[$nome] = TRUE;
+    $applicate[] = $nome;
+  }
+
+  foreach ($saltate as $saltata) {
+    \Drupal::logger('custom_config')->warning('config/@cartella, non applicata: @saltata', [
+      '@cartella' => $cartella,
+      '@saltata' => $saltata,
+    ]);
+  }
+
+  return $applicate;
 }
 
 /**

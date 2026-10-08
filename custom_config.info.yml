@@ -6,6 +6,7 @@ version: 2.2.0
 type: module
 core_version_requirement: ^10 || ^11 || ^12
 dependencies:
+  - auto_username:auto_username
   - config:config
   - dashboard:dashboard
   - filter_perms:filter_perms
