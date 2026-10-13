@@ -52,12 +52,22 @@ class CustomConfigCommands extends DrushCommands {
   }
 
   /**
+   * Sottomoduli con una propria config/update, nell'ordine in cui applicarla.
+   *
+   * Vengono dopo custom_config, così le loro versioni prevalgono: per esempio
+   * custom_config_keryx porta il form del documento con i campi di keryx, che
+   * nei siti senza Albo e AT non esistono.
+   */
+  const SOTTOMODULI = ['custom_config_keryx'];
+
+  /**
    * Riapplica config/update dopo ogni "drush updb".
    *
    * Esegue lo stesso comando che si lancerebbe a mano:
    * @code
    * drush -y config:import --partial --source=.../custom_config/config/update
    * @endcode
+   * e poi lo stesso per ogni sottomodulo attivo di self::SOTTOMODULI.
    * A differenza di hook_post_update_NAME(), che core esegue una sola volta per
    * sito, questo hook parte a ogni esecuzione di updatedb, anche quando non ci
    * sono aggiornamenti in sospeso.
@@ -74,14 +84,36 @@ class CustomConfigCommands extends DrushCommands {
     }
     $this->applied = TRUE;
 
-    $source = DRUPAL_ROOT . '/' . $this->moduleExtensionList->getPath('custom_config') . '/config/update';
+    $moduli = ['custom_config'];
+    foreach (self::SOTTOMODULI as $sottomodulo) {
+      if (\Drupal::moduleHandler()->moduleExists($sottomodulo)) {
+        $moduli[] = $sottomodulo;
+      }
+    }
+
+    foreach ($moduli as $modulo) {
+      $this->riapplica($modulo);
+    }
+  }
+
+  /**
+   * Importa la config/update di un modulo.
+   *
+   * @param string $modulo
+   *   custom_config o uno dei suoi sottomoduli.
+   */
+  protected function riapplica(string $modulo): void {
+    $source = DRUPAL_ROOT . '/' . $this->moduleExtensionList->getPath($modulo) . '/config/update';
     // Senza file da importare config:import uscirebbe in errore.
     if (!is_dir($source) || !glob($source . '/*.yml')) {
-      $this->logger()->notice(dt('Custom config: nessuna configurazione da riapplicare (config/update vuota).'));
+      $this->logger()->notice(dt('@modulo: nessuna configurazione da riapplicare (config/update vuota).', ['@modulo' => $modulo]));
       return;
     }
 
-    $this->logger()->notice(dt('Custom config: riapplico le configurazioni da @source', ['@source' => $source]));
+    $this->logger()->notice(dt('@modulo: riapplico le configurazioni da @source', [
+      '@modulo' => $modulo,
+      '@source' => $source,
+    ]));
 
     $process = $this->processManager()->drush(
       Drush::aliasManager()->getSelf(),
@@ -99,13 +131,14 @@ class CustomConfigCommands extends DrushCommands {
     $this->output()->writeln($process->getOutput());
 
     if (!$process->isSuccessful()) {
-      $this->logger()->error(dt("Custom config: l'allineamento di config/update è fallito. @error", [
+      $this->logger()->error(dt("@modulo: l'allineamento di config/update è fallito. @error", [
+        '@modulo' => $modulo,
         '@error' => $process->getErrorOutput(),
       ]));
       return;
     }
 
-    $this->logger()->success(dt('Custom config: configurazioni di config/update riapplicate.'));
+    $this->logger()->success(dt('@modulo: configurazioni di config/update riapplicate.', ['@modulo' => $modulo]));
   }
 
 }

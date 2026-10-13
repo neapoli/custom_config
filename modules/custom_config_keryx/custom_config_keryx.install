@@ -33,6 +33,10 @@ const CUSTOM_CONFIG_KERYX_RESPONSABILI_PERMISSIONS = [
  * Implements hook_install().
  */
 function custom_config_keryx_install() {
+  // La versione di config/update con i campi di keryx (form del documento):
+  // dopo quella di custom_config, così vince questa. Dopo ogni "drush updb"
+  // la riapplica l'hook di custom_config.
+  _custom_config_apply_configs('update', 'custom_config_keryx');
   _custom_config_keryx_grant_albo_storico_permission();
   _custom_config_keryx_allegati_private();
   _custom_config_keryx_blocchi_at_tema();
